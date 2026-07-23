@@ -1,5 +1,5 @@
 import { Users, CalendarDays, Ticket, ShieldCheck } from "lucide-react";
-import aboutCampus from "../assets/about-campus.png";
+import aboutCampus from "../../assets/about-campus.png";
 const About = () => {
   const stats = [
     { value: "100+", label: "Events Organized" },

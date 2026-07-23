@@ -1,8 +1,10 @@
 import { useEffect } from "react";
-import landingHero from "../assets/landing-hero.png";
+import landingHero from "../../assets/landing-hero.png";
+import { useNavigate } from "react-router-dom";
 
 
 const Splash = () => {
+  const navigate = useNavigate();
 
   const features = [
     {

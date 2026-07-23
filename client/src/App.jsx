@@ -1,16 +1,24 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 
-import Splash from "./pages/Splash";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-
+import Splash from "./pages/landing/Splash.jsx";
+import About from "./pages/landing/About.jsx";
+import Contact from "./pages/landing/Contact.jsx";
+import Login from "./pages/auth/Login.jsx";
+import Register from "./pages/auth/Register.jsx";
+import ForgotPassword from "./pages/auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/auth/ResetPassword.jsx";
+import { Toaster } from "react-hot-toast";
 
 function App() {
+  
   return (
     <BrowserRouter>
-         <Navbar />
+    <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
+      <Navbar />
       <Routes>
         {/* Public Pages */}
         <Route path="/" element={<Splash />} />
@@ -19,7 +27,11 @@ function App() {
 
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
-        
+        <Route path="/register" element={<Register />} />
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* 404 Page */}
         <Route

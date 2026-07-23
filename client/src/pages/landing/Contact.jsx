@@ -122,7 +122,7 @@ const Contact = () => {
 
               <input
                 type="email"
-                placeholder="john@example.com"
+                placeholder="support@campuspass.com"
                 className="w-full rounded-xl border border-gray-700 bg-[#1A1A22] px-4 py-3 outline-none transition focus:border-blue-500"
               />
             </div>
