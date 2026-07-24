@@ -6,9 +6,12 @@ import toast from "react-hot-toast";
 import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
+import { loginSuccess } from "../../redux/authSlice";
+import { useDispatch } from "react-redux";
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,8 +34,7 @@ const Register = () => {
     e.preventDefault();
 
     if (!form.fullName || !form.email || !form.mobile || !form.password) {
-      toast.error("Please fill all fields");
-      return;
+      return toast.error("Please fill all fields");
     }
 
     try {
@@ -40,9 +42,24 @@ const Register = () => {
 
       const response = await api.post("/auth/register", form);
 
+      const { token, user } = response.data.data;
+
+      // Save Token
+      localStorage.setItem("token", token);
+
+      // Update Redux
+      dispatch(
+        loginSuccess({
+          token,
+          user,
+        }),
+      );
+
       toast.success("Account created successfully");
 
-      navigate("/login");
+      navigate("/home", {
+        replace: true,
+      });
     } catch (error) {
       toast.error(error.response?.data?.message || "Registration failed");
     } finally {

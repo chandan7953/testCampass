@@ -7,88 +7,45 @@ import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
 
-
 const ForgotPassword = () => {
-
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
 
-
   const [email, setEmail] = useState("");
 
-
-
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
-
-
-    if(!email){
-
+    if (!email) {
       toast.error("Please enter your email");
       return;
-
     }
-
-
 
     try {
-
       setLoading(true);
 
+      await api.post("/auth/forgot-password", {
+        email,
+      });
 
+      toast.success("OTP sent to your email");
 
-      await api.post(
-        "/auth/forgot-password",
-        {
-          email
-        }
-      );
+      navigate("/reset-password", {
+        state: {
+          email,
+        },
+      });
+    } catch (error) {
+      console.log(error.response?.data?.message);
 
-
-
-      toast.success(
-        "OTP sent to your email"
-      );
-
-
-
-      navigate(
-        "/reset-password",
-        {
-          state:{
-            email
-          }
-        }
-      );
-
-
-
-    } 
-    catch(error){
-
-      toast.error(
-        error.response?.data?.message ||
-        "Something went wrong"
-      );
-
-    }
-    finally{
-
+      toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
       setLoading(false);
-
     }
-
-
   };
 
-
-
-
   return (
-
     <div
       className="
       min-h-screen
@@ -97,11 +54,7 @@ const ForgotPassword = () => {
       text-white
       "
     >
-
-
-
       {/* LEFT SECTION */}
-
 
       <div
         className="
@@ -116,9 +69,6 @@ const ForgotPassword = () => {
         overflow-hidden
         "
       >
-
-
-
         <div
           className="
           absolute
@@ -132,9 +82,6 @@ const ForgotPassword = () => {
           "
         />
 
-
-
-
         <div
           className="
           relative
@@ -144,11 +91,7 @@ const ForgotPassword = () => {
           justify-center
           "
         >
-
-
-
           {/* RESET CARD */}
-
 
           <div
             className="
@@ -161,9 +104,6 @@ const ForgotPassword = () => {
             backdrop-blur-xl
             "
           >
-
-
-
             <p
               className="
               text-xs
@@ -173,9 +113,6 @@ const ForgotPassword = () => {
               ACCOUNT SECURITY
             </p>
 
-
-
-
             <h2
               className="
               mt-3
@@ -183,15 +120,10 @@ const ForgotPassword = () => {
               font-bold
               "
             >
-
               Recover
-              <br/>
+              <br />
               Account
-
             </h2>
-
-
-
 
             <div
               className="
@@ -201,49 +133,36 @@ const ForgotPassword = () => {
               p-5
               "
             >
+              <p className="text-gray-400 text-sm">Secure password recovery</p>
 
-
-              <p className="text-gray-400 text-sm">
-                Secure password recovery
-              </p>
-
-
-
-              <p className="
+              <p
+                className="
               mt-4
               font-semibold
-              ">
+              "
+              >
                 🔐 OTP Verification
               </p>
 
-
-
-              <p className="
+              <p
+                className="
               mt-3
               font-semibold
-              ">
+              "
+              >
                 📧 Email Protection
               </p>
 
-
-
-              <p className="
+              <p
+                className="
               mt-3
               font-semibold
-              ">
+              "
+              >
                 ✅ Safe Access
               </p>
-
-
-
             </div>
-
-
-
           </div>
-
-
-
 
           <div
             className="
@@ -262,10 +181,6 @@ const ForgotPassword = () => {
             🔒 Security
           </div>
 
-
-
-
-
           <div
             className="
             absolute
@@ -282,14 +197,7 @@ const ForgotPassword = () => {
           >
             📩 OTP
           </div>
-
-
-
         </div>
-
-
-
-
 
         <p
           className="
@@ -297,24 +205,11 @@ const ForgotPassword = () => {
           text-gray-500
           "
         >
-
           © {new Date().getFullYear()} CampusPass
-
         </p>
-
-
-
-
       </div>
 
-
-
-
-
-
       {/* FORM SECTION */}
-
-
 
       <div
         className="
@@ -325,32 +220,20 @@ const ForgotPassword = () => {
         p-8
         "
       >
-
-
-
         <div
           className="
           w-full
           max-w-md
           "
         >
-
-
-
-
           <h1
             className="
             text-3xl
             font-bold
             "
           >
-
             Forgot Password
-
           </h1>
-
-
-
 
           <p
             className="
@@ -358,15 +241,8 @@ const ForgotPassword = () => {
             text-gray-400
             "
           >
-
             Enter your email to receive OTP
-
           </p>
-
-
-
-
-
 
           <form
             onSubmit={handleSubmit}
@@ -375,53 +251,20 @@ const ForgotPassword = () => {
             space-y-6
             "
           >
-
-
-
-
             <InputField
-
               label="Email Address"
-
               name="email"
-
               type="email"
-
               placeholder="example@gmail.com"
-
               value={email}
-
-              onChange={(e)=>
-                setEmail(e.target.value)
-              }
-
+              onChange={(e) => setEmail(e.target.value)}
               icon={Mail}
-
             />
 
-
-
-
-
-
-            <Button
-              type="submit"
-              loading={loading}
-            >
-
+            <Button type="submit" loading={loading}>
               Send OTP
-
             </Button>
-
-
-
-
-
           </form>
-
-
-
-
 
           <p
             className="
@@ -429,12 +272,7 @@ const ForgotPassword = () => {
             text-gray-400
             "
           >
-
-            Remember your password?
-
-            {" "}
-
-
+            Remember your password?{" "}
             <Link
               to="/login"
               className="
@@ -442,31 +280,13 @@ const ForgotPassword = () => {
               font-semibold
               "
             >
-
               Sign In
-
             </Link>
-
-
           </p>
-
-
-
-
         </div>
-
-
-
       </div>
-
-
-
-
     </div>
-
   );
-
 };
-
 
 export default ForgotPassword;

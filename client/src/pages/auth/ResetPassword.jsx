@@ -1,128 +1,60 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Mail,
-  KeyRound,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Mail, KeyRound, Lock, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
 
-
 const ResetPassword = () => {
-
   const navigate = useNavigate();
 
   const location = useLocation();
 
-
   const emailFromState = location.state?.email || "";
-
-
 
   const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
 
-
-
   const [form, setForm] = useState({
-
     email: emailFromState,
     otp: "",
     password: "",
-
   });
 
-
-
-
-  const handleChange = (e)=>{
-
-    setForm((prev)=>({
-
+  const handleChange = (e) => {
+    setForm((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-
     }));
-
   };
 
-
-
-
-
-  const handleSubmit = async(e)=>{
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-
-
-    if(
-      !form.email ||
-      !form.otp ||
-      !form.password
-    ){
-
+    if (!form.email || !form.otp || !form.password) {
       toast.error("Please fill all fields");
       return;
-
     }
 
-
-
-
-    try{
-
+    try {
       setLoading(true);
 
+      await api.post("/auth/reset-password", form);
 
-
-      await api.post(
-        "/auth/reset-password",
-        form
-      );
-
-
-
-      toast.success(
-        "Password reset successful"
-      );
-
-
+      toast.success("Password reset successful");
 
       navigate("/login");
-
-
-
-    }
-    catch(error){
-
-      toast.error(
-        error.response?.data?.message ||
-        "Password reset failed"
-      );
-
-    }
-    finally{
-
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Password reset failed");
+    } finally {
       setLoading(false);
-
     }
-
-
   };
 
-
-
-
   return (
-
     <div
       className="
       min-h-screen
@@ -131,12 +63,7 @@ const ResetPassword = () => {
       text-white
       "
     >
-
-
-
-
       {/* LEFT SECTION */}
-
 
       <div
         className="
@@ -151,9 +78,6 @@ const ResetPassword = () => {
         overflow-hidden
         "
       >
-
-
-
         <div
           className="
           absolute
@@ -167,9 +91,6 @@ const ResetPassword = () => {
           "
         />
 
-
-
-
         <div
           className="
           relative
@@ -179,12 +100,7 @@ const ResetPassword = () => {
           justify-center
           "
         >
-
-
-
-
           {/* OTP CARD */}
-
 
           <div
             className="
@@ -197,22 +113,14 @@ const ResetPassword = () => {
             backdrop-blur-xl
             "
           >
-
-
-
             <p
               className="
               text-xs
               text-gray-400
               "
             >
-
               PASSWORD RECOVERY
-
             </p>
-
-
-
 
             <h2
               className="
@@ -221,16 +129,10 @@ const ResetPassword = () => {
               font-bold
               "
             >
-
               Verify
-              <br/>
+              <br />
               OTP
-
             </h2>
-
-
-
-
 
             <div
               className="
@@ -240,15 +142,9 @@ const ResetPassword = () => {
               p-5
               "
             >
-
-
               <p className="text-gray-400 text-sm">
-
                 Enter the OTP sent to your email
-
               </p>
-
-
 
               <p
                 className="
@@ -256,12 +152,8 @@ const ResetPassword = () => {
                 font-semibold
                 "
               >
-
                 🔑 Secure Verification
-
               </p>
-
-
 
               <p
                 className="
@@ -269,22 +161,10 @@ const ResetPassword = () => {
                 font-semibold
                 "
               >
-
                 🔐 New Password Setup
-
               </p>
-
-
-
             </div>
-
-
-
           </div>
-
-
-
-
 
           <div
             className="
@@ -300,14 +180,8 @@ const ResetPassword = () => {
             backdrop-blur
             "
           >
-
             🔑 OTP
-
           </div>
-
-
-
-
 
           <div
             className="
@@ -323,19 +197,9 @@ const ResetPassword = () => {
             backdrop-blur
             "
           >
-
             🛡️ Secure
-
           </div>
-
-
-
-
         </div>
-
-
-
-
 
         <p
           className="
@@ -343,24 +207,11 @@ const ResetPassword = () => {
           text-gray-500
           "
         >
-
           © {new Date().getFullYear()} CampusPass
-
         </p>
-
-
-
-
       </div>
 
-
-
-
-
-
       {/* FORM */}
-
-
 
       <div
         className="
@@ -371,32 +222,20 @@ const ResetPassword = () => {
         p-8
         "
       >
-
-
-
         <div
           className="
           w-full
           max-w-md
           "
         >
-
-
-
-
           <h1
             className="
             text-3xl
             font-bold
             "
           >
-
             Reset Password
-
           </h1>
-
-
-
 
           <p
             className="
@@ -404,15 +243,8 @@ const ResetPassword = () => {
             text-gray-400
             "
           >
-
             Enter OTP and create a new password
-
           </p>
-
-
-
-
-
 
           <form
             onSubmit={handleSubmit}
@@ -421,138 +253,55 @@ const ResetPassword = () => {
             space-y-5
             "
           >
-
-
-
-
             <InputField
-
               label="Email Address"
-
               name="email"
-
               type="email"
-
               value={form.email}
-
               onChange={handleChange}
-
               placeholder="example@gmail.com"
-
               icon={Mail}
-
             />
-
-
-
-
 
             <InputField
-
               label="OTP"
-
               name="otp"
-
               type="text"
-
               value={form.otp}
-
               onChange={handleChange}
-
               placeholder="Enter OTP"
-
               icon={KeyRound}
-
             />
-
-
-
-
-
 
             <div className="relative">
-
-
               <InputField
-
                 label="New Password"
-
                 name="password"
-
-                type={
-                  showPassword
-                  ?
-                  "text"
-                  :
-                  "password"
-                }
-
+                type={showPassword ? "text" : "password"}
                 value={form.password}
-
                 onChange={handleChange}
-
                 placeholder="********"
-
                 icon={Lock}
-
               />
 
-
-
               <button
-
                 type="button"
-
-                onClick={()=>
-                  setShowPassword(!showPassword)
-                }
-
+                onClick={() => setShowPassword(!showPassword)}
                 className="
                 absolute
                 right-4
                 top-10
                 text-gray-400
                 "
-
               >
-
-                {
-                  showPassword
-                  ?
-                  <EyeOff size={18}/>
-                  :
-                  <Eye size={18}/>
-                }
-
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-
-
-
             </div>
 
-
-
-
-
-
-            <Button
-              type="submit"
-              loading={loading}
-            >
-
+            <Button type="submit" loading={loading}>
               Reset Password
-
             </Button>
-
-
-
-
-
           </form>
-
-
-
-
 
           <p
             className="
@@ -560,46 +309,21 @@ const ResetPassword = () => {
             text-gray-400
             "
           >
-
-            Remember password?
-
-            {" "}
-
+            Remember password?{" "}
             <Link
-
               to="/login"
-
               className="
               text-blue-500
               font-semibold
               "
             >
-
               Sign In
-
             </Link>
-
-
           </p>
-
-
-
-
-
         </div>
-
-
-
       </div>
-
-
-
-
     </div>
-
   );
-
 };
-
 
 export default ResetPassword;

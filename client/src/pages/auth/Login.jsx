@@ -6,8 +6,11 @@ import toast from "react-hot-toast";
 import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../../redux/authSlice";
 
 const Login = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -26,37 +29,47 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!form.email || !form.password) {
-      toast.error("Please fill all fields");
-      return;
-    }
+  if (!form.email || !form.password) {
+    return toast.error("Please fill all fields");
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response = await api.post("/auth/login", form);
+    const response = await api.post("/auth/login", form);
 
-      const data = response.data.data;
+    const { token, user } = response.data.data;
 
-      localStorage.setItem("token", data.token);
+    localStorage.setItem("token", token);
 
-      toast.success("Welcome back!");
+    dispatch(
+      loginSuccess({
+        token,
+        user,
+      })
+    );
 
-      if (data.user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (data.user.role === "organizer") {
-        navigate("/organizer/dashboard");
-      } else {
-        navigate("/home");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+    toast.success("Welcome back!");
+
+    const routes = {
+      admin: "/admin/dashboard",
+      organizer: "/organizer/dashboard",
+      student: "/home",
+    };
+
+    navigate(routes[user.role] || "/", {
+      replace: true,
+    });
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message || "Login failed"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div

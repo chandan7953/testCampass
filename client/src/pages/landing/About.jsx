@@ -1,6 +1,8 @@
 import { Users, CalendarDays, Ticket, ShieldCheck } from "lucide-react";
 import aboutCampus from "../../assets/about-campus.png";
+import { useNavigate } from "react-router-dom";
 const About = () => {
+  const navigate = useNavigate();
   const stats = [
     { value: "100+", label: "Events Organized" },
     { value: "10K+", label: "Students Connected" },
@@ -192,7 +194,7 @@ const About = () => {
             and create unforgettable campus experiences.
           </p>
 
-          <button className="mt-10 rounded-xl bg-blue-600 px-8 py-4 font-semibold transition hover:bg-blue-700">
+          <button onClick={() => navigate("/login")} className="mt-10 rounded-xl bg-blue-600 px-8 py-4 font-semibold transition hover:bg-blue-700">
             Get Started
           </button>
 
