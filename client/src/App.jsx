@@ -1,121 +1,192 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Toaster } from "react-hot-toast";
 
 import api from "./api/axios";
 import { loginSuccess, logout } from "./redux/authSlice";
 
-import Navbar from "./components/Navbar";
+// Layouts
+import MainLayout from "./layouts/MainLayout";
+import SidebarLayout from "./layouts/SidebarLayout";
 
+// Route Guards
+import GuestRoute from "./routes/GuestRoute";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Landing Pages
 import Splash from "./pages/landing/Splash";
 import About from "./pages/landing/About";
 import Contact from "./pages/landing/Contact";
 
+// Auth Pages
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 
+// Student Pages
 import Home from "./pages/student/Home";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
+import BrowseEvents from "./pages/student/BrowseEvents";
+import EventDetail from "./pages/student/EventDetail";
+import EventMap from "./pages/student/EventMap";
+import BookTickets from "./pages/student/BookTickets";
+import Payment from "./pages/student/Payment";
+import ETicket from "./pages/student/ETicket";
+import MyBookings from "./pages/student/MyBookings";
+import Favorites from "./pages/student/Favorites";
+import Notifications from "./pages/student/Notifications";
+import Profile from "./pages/student/Profile";
+
+// Organizer Pages
+import OrgDashboard from "./pages/organizer/OrgDashboard";
+import CreateEvent from "./pages/organizer/CreateEvent";
+import ManageEvents from "./pages/organizer/ManageEvents";
+import Attendees from "./pages/organizer/Attendees";
+import QRScanPage from "./pages/organizer/QRScanPage";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
+import ManageAllEvents from "./pages/admin/ManageAllEvents.jsx";
+import ManageUsers from "./pages/admin/ManageUsers.jsx";
 
 function App() {
   const dispatch = useDispatch();
-
-  const { user, token } = useSelector((state) => state.auth);
- 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const checkAuthentication = async () => {
-    const storedToken = localStorage.getItem("token");
+    const checkAuthentication = async () => {
+      const token = localStorage.getItem("token");
 
-    if (!storedToken) {
-      setLoading(false);
-      return;
-    }
+      if (!token) {
+        console.log("Chandan");
+        setLoading(false);
+        return;
+      }
 
-    try {
-      const response = await api.get("/auth/me");
+      try {
+        
+        
+        const response = await api.get("/auth/me");
+        console.log("token ", token);
+        console.log("user ", response.data.data);
+
 
       dispatch(
         loginSuccess({
-          token: storedToken,
+          token: token,
           user: response.data.data, // <-- Correct
         })
-      );
-    } catch (err) {
-      console.error(err);
+        );
+      } catch (error) {
+        localStorage.removeItem("token");
+        dispatch(logout());
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      localStorage.removeItem("token");
-      dispatch(logout());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  checkAuthentication();
-}, [dispatch]);
+    checkAuthentication();
+  }, [dispatch]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0F] text-white">
-        Loading...
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">
+    Loading...
+  </div>;
   }
-
-  const getDashboard = () => {
-    if (!token || !user) return <Splash />;
-
-    switch (user.role) {
-      case "admin":
-        return <Navigate to="/admin/home" replace />;
-
-      case "organizer":
-        return <Navigate to="/organizer/home" replace />;
-
-      case "student":
-      default:
-        return <Navigate to="/home" replace />;
-    }
-  };
 
   return (
     <BrowserRouter>
-      <Toaster position="top-right" reverseOrder={false} />
-
-      <Navbar />
+      <Toaster position="top-right" />
 
       <Routes>
-        {/* Landing */}
-        <Route path="/" element={getDashboard()} />
 
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+        {/* Guest-only pages: landing + auth routes */}
+        <Route element={<GuestRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Splash />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+          </Route>
 
-        {/* Auth */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
 
-        {/* Dashboards */}
-        <Route path="/home" element={<Home />} />
+        {/* Shared Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/event/:id" element={<EventDetail />} />
+          <Route path="/event/:id/map" element={<EventMap />} />
+          <Route path="/ticket/:bookingId" element={<ETicket />} />
+          <Route path="/notifications" element={<Notifications />} />
+        </Route>
 
-        <Route
-          path="/admin/home"
-          element={<AdminDashboard />}
-        />
+        {/* Student */}
+        <Route element={<ProtectedRoute role="student" />}>
+          <Route element={<SidebarLayout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/browse" element={<BrowseEvents />} />
+            <Route path="/event/:id/book" element={<BookTickets />} />
+            <Route path="/payment/:bookingId" element={<Payment />} />
+            <Route path="/bookings" element={<MyBookings />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Route>
 
-        <Route
-          path="/organizer/home"
-          element={<OrganizerDashboard />}
-        />
+        {/* Organizer */}
+        <Route element={<ProtectedRoute role="organizer" />}>
+          <Route element={<SidebarLayout />}>
+            <Route
+              path="/organizer/dashboard"
+              element={<OrgDashboard />}
+            />
+            <Route
+              path="/organizer/create"
+              element={<CreateEvent />}
+            />
+            <Route
+              path="/organizer/events"
+              element={<ManageEvents />}
+            />
+            <Route
+              path="/organizer/attendees"
+              element={<Attendees />}
+            />
+            <Route
+              path="/organizer/attendees/:eventId"
+              element={<Attendees />}
+            />
+            <Route
+              path="/organizer/scan/:eventId"
+              element={<QRScanPage />}
+            />
+          </Route>
+        </Route>
 
+        {/* Admin */}
+        <Route element={<ProtectedRoute role="admin" />}>
+          <Route element={<SidebarLayout />}>
+            <Route
+              path="/admin/dashboard"
+              element={<AdminDashboard />}
+            />
+            <Route
+              path="/admin/events"
+              element={<ManageAllEvents />}
+            />
+            <Route
+              path="/admin/users"
+              element={<ManageUsers />}
+            />
+          </Route>
+        </Route>
+
+        {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

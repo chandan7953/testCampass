@@ -3,13 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   isAuthenticated: false,
   token: null,
-  user: {
-    _id: null,
-    fullName: "",
-    email: "",
-    mobile: "",
-    role: "student",
-  },
+  user: null,
 };
 
 const authSlice = createSlice({
@@ -19,14 +13,7 @@ const authSlice = createSlice({
     loginSuccess: (state, action) => {
       state.isAuthenticated = true;
       state.token = action.payload.token;
-
-      state.user = {
-        _id: action.payload.user._id,
-        fullName: action.payload.user.fullName,
-        email: action.payload.user.email,
-        mobile: action.payload.user.mobile,
-        role: action.payload.user.role,
-      };
+      state.user = action.payload.user;
     },
 
     updateUser: (state, action) => {
@@ -39,14 +26,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.isAuthenticated = false;
       state.token = null;
-
-      state.user = {
-        _id: null,
-        fullName: "",
-        email: "",
-        mobile: "",
-        role: "student",
-      };
+      state.user = null;
     },
   },
 });
