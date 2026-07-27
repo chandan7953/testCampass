@@ -59,7 +59,6 @@ function App() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        console.log("Chandan");
         setLoading(false);
         return;
       }
@@ -68,8 +67,6 @@ function App() {
         
         
         const response = await api.get("/auth/me");
-        console.log("token ", token);
-        console.log("user ", response.data.data);
 
 
       dispatch(
@@ -122,7 +119,7 @@ function App() {
           <Route path="/ticket/:bookingId" element={<ETicket />} />
           <Route path="/notifications" element={<Notifications />} />
         </Route>
-
+ 
         {/* Student */}
         <Route element={<ProtectedRoute role="student" />}>
           <Route element={<SidebarLayout />}>

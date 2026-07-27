@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 
 const ProtectedRoute = ({ role }) => {
   const { token, user } = useSelector((state) => state.auth);
-  console.log(token, user);
   
 
   // Not logged in

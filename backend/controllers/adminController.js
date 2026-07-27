@@ -45,11 +45,17 @@ const getDashboardStats = async (
       revenueData[0]
         ?.totalRevenue || 0;
 
+    const totalOrganizers =
+      await User.countDocuments({
+        role: "organizer",
+      });
+
     res.status(200).json(
       apiResponse(
         200,
         "Dashboard stats fetched",
         {
+          totalOrganizers,
           totalUsers,
           totalEvents,
           totalBookings,

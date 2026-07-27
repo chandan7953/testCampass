@@ -305,7 +305,6 @@ const resetPassword = async (req, res, next) => {
 
 const getCurrentUser = async (req, res, next) => {
   try {
-    console.log("chandan");
     const user = await User.findById(req.user.id).select("-password");
     
     
