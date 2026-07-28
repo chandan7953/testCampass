@@ -53,20 +53,26 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchDashboard = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const res = await api.get("admin/dashboard");
-      
-      
+    const res = await api.get("/admin/dashboard");
 
-      setStats(res.data.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const data = res.data.data;
+
+    setStats({
+      ...data,
+      totalUsers:
+        data.totalUsers > 0
+          ? data.totalUsers - 1
+          : 0,
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const cards = [
     {
@@ -138,7 +144,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-r ${card.color}`}
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-r ${card.color}`}
                 >
                   <Icon size={28} className="text-white" />
                 </div>

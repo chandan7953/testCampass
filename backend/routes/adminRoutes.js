@@ -14,6 +14,7 @@ const {
   deleteEvent,
   getAllPayments,
   getAllBookings,
+  updateUserRole,
 } = require("../controllers/adminController");
 
 const verifyToken = require("../middlewares/verifyToken");
@@ -36,6 +37,8 @@ router.get("/users/:id", getUserById);
 router.patch("/users/:id/block", blockUser);
 
 router.patch("/users/:id/unblock", unblockUser);
+
+router.patch("/users/:id/role", updateUserRole);
 
 
 

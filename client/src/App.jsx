@@ -49,6 +49,7 @@ import QRScanPage from "./pages/organizer/QRScanPage";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import ManageAllEvents from "./pages/admin/ManageAllEvents.jsx";
 import ManageUsers from "./pages/admin/ManageUsers.jsx";
+import UserDetails from "./pages/admin/UserDetails.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -64,16 +65,13 @@ function App() {
       }
 
       try {
-        
-        
         const response = await api.get("/auth/me");
 
-
-      dispatch(
-        loginSuccess({
-          token: token,
-          user: response.data.data, // <-- Correct
-        })
+        dispatch(
+          loginSuccess({
+            token: token,
+            user: response.data.data, // <-- Correct
+          }),
         );
       } catch (error) {
         localStorage.removeItem("token");
@@ -87,9 +85,11 @@ function App() {
   }, [dispatch]);
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">
-    Loading...
-  </div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -97,7 +97,6 @@ function App() {
       <Toaster position="top-right" />
 
       <Routes>
-
         {/* Guest-only pages: landing + auth routes */}
         <Route element={<GuestRoute />}>
           <Route element={<MainLayout />}>
@@ -119,7 +118,7 @@ function App() {
           <Route path="/ticket/:bookingId" element={<ETicket />} />
           <Route path="/notifications" element={<Notifications />} />
         </Route>
- 
+
         {/* Student */}
         <Route element={<ProtectedRoute role="student" />}>
           <Route element={<SidebarLayout />}>
@@ -136,54 +135,32 @@ function App() {
         {/* Organizer */}
         <Route element={<ProtectedRoute role="organizer" />}>
           <Route element={<SidebarLayout />}>
-            <Route
-              path="/organizer/dashboard"
-              element={<OrgDashboard />}
-            />
-            <Route
-              path="/organizer/create"
-              element={<CreateEvent />}
-            />
-            <Route
-              path="/organizer/events"
-              element={<ManageEvents />}
-            />
-            <Route
-              path="/organizer/attendees"
-              element={<Attendees />}
-            />
+            <Route path="/organizer/dashboard" element={<OrgDashboard />} />
+            <Route path="/organizer/create" element={<CreateEvent />} />
+            <Route path="/organizer/events" element={<ManageEvents />} />
+            <Route path="/organizer/attendees" element={<Attendees />} />
             <Route
               path="/organizer/attendees/:eventId"
               element={<Attendees />}
             />
-            <Route
-              path="/organizer/scan/:eventId"
-              element={<QRScanPage />}
-            />
+            <Route path="/organizer/scan/:eventId" element={<QRScanPage />} />
           </Route>
         </Route>
 
         {/* Admin */}
         <Route element={<ProtectedRoute role="admin" />}>
           <Route element={<SidebarLayout />}>
-            <Route
-              path="/admin/dashboard"
-              element={<AdminDashboard />}
-            />
-            <Route
-              path="/admin/events"
-              element={<ManageAllEvents />}
-            />
-            <Route
-              path="/admin/users"
-              element={<ManageUsers />}
-            />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/events" element={<ManageAllEvents />} />
+
+            <Route path="/admin/users" element={<ManageUsers />} />
+
+            <Route path="/admin/users/:id" element={<UserDetails />} />
           </Route>
         </Route>
 
         {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
-
       </Routes>
     </BrowserRouter>
   );

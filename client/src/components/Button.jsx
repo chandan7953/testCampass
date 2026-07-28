@@ -6,14 +6,18 @@ const Button = ({
   type = "button",
   loading = false,
   disabled = false,
+  onClick,
+  className = "",
+  ...rest
 }) => {
 
   return (
 
     <button
       type={type}
+      onClick={onClick}
       disabled={disabled || loading}
-      className="
+      className={`
         flex
         w-full
         items-center
@@ -28,7 +32,9 @@ const Button = ({
         hover:bg-blue-700
         disabled:cursor-not-allowed
         disabled:opacity-70
-      "
+      ${className}
+      `}
+      {...rest}
     >
 
       {

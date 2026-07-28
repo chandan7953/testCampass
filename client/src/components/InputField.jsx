@@ -5,6 +5,7 @@ const InputField = ({
   placeholder,
   value,
   onChange,
+  onKeyDown,
   icon: Icon,
   error,
 }) => {
@@ -37,6 +38,7 @@ const InputField = ({
           name={name}
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           className={`
             w-full
