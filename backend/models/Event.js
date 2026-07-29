@@ -5,6 +5,7 @@ const eventSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
 
     description: {
@@ -12,7 +13,10 @@ const eventSchema = new mongoose.Schema(
       required: true,
     },
 
-    poster: String,
+    poster: {
+      type: String,
+      default: "",
+    },
 
     category: {
       type: mongoose.Schema.Types.ObjectId,
@@ -42,12 +46,20 @@ const eventSchema = new mongoose.Schema(
       required: true,
     },
 
+    registrationDeadline: Date,
+
     capacity: {
       type: Number,
       required: true,
+      min: 1,
     },
 
     bookedSeats: {
+      type: Number,
+      default: 0,
+    },
+
+    price: {
       type: Number,
       default: 0,
     },
@@ -59,13 +71,34 @@ const eventSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "published", "cancelled", "completed"],
-      default: "draft",
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled",
+        "completed",
+      ],
+      default: "pending",
     },
+
+    rejectionReason: {
+      type: String,
+      default: "",
+    },
+
+    tags: [
+      {
+        type: String,
+      },
+    ],
+
+    contactEmail: String,
+
+    contactPhone: String,
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 module.exports = mongoose.model("Event", eventSchema);

@@ -54,6 +54,8 @@ import ManageUsers from "./pages/admin/ManageUsers";
 import UserDetails from "./pages/admin/UserDetails";
 import ManageCategories from "./pages/admin/ManageCategories";
 import AddCategory from "./pages/admin/AddCategory";
+import ManageVenues from "./pages/admin/ManageVenues.jsx";
+import CreateVenue from "./pages/admin/CreateVenue.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -76,7 +78,7 @@ function App() {
           loginSuccess({
             token,
             user: response.data.data,
-          })
+          }),
         );
       } catch (error) {
         localStorage.removeItem("token");
@@ -141,21 +143,58 @@ function App() {
 
         {/* Organizer Routes */}
         <Route element={<ProtectedRoute role="organizer" />}>
-          <Route element={<SidebarLayout />}>
-            <Route path="/organizer/dashboard" element={<OrgDashboard />} />
-            <Route path="/organizer/create" element={<CreateEvent />} />
-            <Route path="/organizer/events" element={<ManageEvents />} />
-            <Route path="/organizer/attendees" element={<Attendees />} />
-            <Route
-              path="/organizer/attendees/:eventId"
-              element={<Attendees />}
-            />
-            <Route
-              path="/organizer/scan/:eventId"
-              element={<QRScanPage />}
-            />
-          </Route>
-        </Route>
+  <Route element={<SidebarLayout />}>
+
+    <Route
+      path="/organizer/dashboard"
+      element={<OrgDashboard />}
+    />
+
+    <Route
+      path="/organizer/create"
+      element={<CreateEvent />}
+    />
+
+    <Route
+      path="/organizer/events"
+      element={<ManageEvents />}
+    />
+
+
+    {/* View Single Event */}
+    {/* <Route
+      path="/organizer/events/:eventId"
+      element={<EventDetails />}
+    /> */}
+
+
+    {/* Edit Event */}
+    <Route
+      path="/organizer/events/edit/:eventId"
+      element={<CreateEvent />}
+    />
+
+
+
+    {/* <Route
+      path="/organizer/attendees"
+      element={<Attendees />}
+    /> */}
+
+{/* 
+    <Route
+      path="/organizer/attendees/:eventId"
+      element={<Attendees />}
+    /> */}
+
+
+    {/* <Route
+      path="/organizer/scan/:eventId"
+      element={<QRScanPage />}
+    /> */}
+
+  </Route>
+</Route>
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute role="admin" />}>
@@ -165,18 +204,17 @@ function App() {
             <Route path="/admin/users" element={<ManageUsers />} />
             <Route path="/admin/users/:id" element={<UserDetails />} />
 
-            <Route
-              path="/admin/categories"
-              element={<ManageCategories />}
-            />
-            <Route
-              path="/admin/categories/add"
-              element={<AddCategory />}
-            />
+            <Route path="/admin/categories" element={<ManageCategories />} />
+            <Route path="/admin/categories/add" element={<AddCategory />} />
             <Route
               path="/admin/categories/edit/:id"
               element={<AddCategory />}
             />
+            <Route path="/admin/venues" element={<ManageVenues />} />
+
+            <Route path="/admin/venues/add" element={<CreateVenue />} />
+
+            <Route path="/admin/venues/edit/:id" element={<CreateVenue />} />
           </Route>
         </Route>
 

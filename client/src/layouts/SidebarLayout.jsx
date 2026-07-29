@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
+
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 
@@ -25,6 +26,7 @@ import {
   X,
   Tag,
   Bell,
+  Building2
 } from "lucide-react";
 
 
@@ -131,31 +133,42 @@ const adminLinks = [
     path: "/admin/dashboard",
     icon: LayoutDashboard,
   },
+
   {
     label: "Events",
     path: "/admin/events",
     icon: ClipboardList,
   },
+
+  {
+    label: "Venues",
+    path: "/admin/venues",
+    icon: Building2,
+  },
+
   {
     label: "Categories",
     path: "/admin/categories",
     icon: Tag,
   },
+
   {
     label: "Users",
     path: "/admin/users",
     icon: Users,
   },
+
   {
     label: "Notifications",
     path: "/notifications",
     icon: Bell,
   },
+
   {
-      label: "Profile",
-      path: "/profile",
-      icon: User,
-    },
+    label: "Profile",
+    path: "/profile",
+    icon: User,
+  },
 ];
   const links =
     user?.role === "admin"
