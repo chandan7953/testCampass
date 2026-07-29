@@ -22,6 +22,9 @@ const SidebarLayout = () => {
     if (path === "/home" || path === "/organizer/dashboard" || path === "/admin/dashboard") {
       return location.pathname === path;
     }
+    if (path === "/browse" && (location.pathname.startsWith("/event/") || location.pathname.startsWith("/payment/"))) {
+      return true;
+    }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 

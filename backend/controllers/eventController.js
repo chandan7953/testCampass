@@ -3,6 +3,7 @@ const User = require("../models/User");
 const Category = require("../models/Category");
 const Notification = require("../models/Notification");
 const Venue = require("../models/Venue");
+const Ticket = require("../models/Ticket");
 
 const apiResponse = require("../utils/apiResponse");
 const ApiError = require("../utils/ApiError");
@@ -424,9 +425,33 @@ const getAllEvents = async (req, res, next) => {
         )
         .sort({
           createdAt: -1
-        });
+        })
+        .lean();
 
+    const tickets = await Ticket.find({
+      eventId: { $in: events.map((e) => e._id) },
+    });
 
+    const eventsWithSeats = events.map((event) => {
+      const eventTickets = tickets.filter(
+        (t) => t.eventId.toString() === event._id.toString()
+      );
+      
+      let availableSeats = 0;
+      if (eventTickets.length > 0) {
+        availableSeats = eventTickets.reduce(
+          (sum, t) => sum + (t.status === "active" ? t.remainingQuantity : 0),
+          0
+        );
+      } else {
+        availableSeats = event.capacity - (event.bookedSeats || 0);
+      }
+      
+      return {
+        ...event,
+        availableSeats,
+      };
+    });
 
     res
       .status(200)
@@ -434,7 +459,7 @@ const getAllEvents = async (req, res, next) => {
         apiResponse(
           200,
           "Events fetched successfully",
-          events
+          eventsWithSeats
         )
       );
 
@@ -600,6 +625,16 @@ const approveEvent =
         );
 
       }
+
+      await Ticket.create({
+        eventId: event._id,
+        title: "General Admission",
+        description: "Standard entry pass",
+        price: event.price || 0,
+        quantity: event.capacity,
+        remainingQuantity: event.capacity,
+        status: "active"
+      });
 
 
 

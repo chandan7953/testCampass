@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { Bell, Check, Trash2, Calendar, CreditCard, Ticket, ShieldCheck, CheckCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import { useDispatch } from "react-redux";
+import { decrementUnreadCount, resetUnreadCount } from "../../redux/notificationSlice";
 
 import PageHeader from "../../components/PageHeader";
 import EmptyState from "../../components/EmptyState";
 
 const Notifications = () => {
+  const dispatch = useDispatch();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,9 +29,11 @@ const Notifications = () => {
     fetchNotifications();
   }, []);
 
-  const markAsRead = async (id) => {
+  const markAsRead = async (id, isRead) => {
+    if (isRead) return;
     try {
       await api.patch(`/notifications/${id}/read`);
+      dispatch(decrementUnreadCount());
       fetchNotifications();
     } catch (error) {
       toast.error("Failed to update notification");
@@ -38,6 +43,7 @@ const Notifications = () => {
   const markAllAsRead = async () => {
     try {
       await api.patch("/notifications/read-all");
+      dispatch(resetUnreadCount());
       toast.success("All notifications marked as read");
       fetchNotifications();
     } catch (error) {
@@ -121,7 +127,7 @@ const Notifications = () => {
 
                 <div
                   className="flex-1 cursor-pointer space-y-1"
-                  onClick={() => markAsRead(notification._id)}
+                  onClick={() => markAsRead(notification._id, notification.isRead)}
                 >
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-white text-sm">{notification.title}</h3>

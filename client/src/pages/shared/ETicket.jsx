@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Printer, Share2, MapPin } from "lucide-react";
+import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
 
@@ -21,7 +21,16 @@ const ETicket = () => {
     try {
       setLoading(true);
       const res = await api.get(`/bookings/${bookingId}`);
-      setBooking(res.data.data);
+      const data = res.data.data;
+
+      // Guard: if payment is not completed, redirect to payment page
+      if (data.paymentStatus !== "paid" && data.totalAmount > 0) {
+        toast("Complete payment to view your QR pass", { icon: "💳" });
+        navigate(`/payment/${bookingId}`, { replace: true });
+        return;
+      }
+
+      setBooking(data);
     } catch (error) {
       toast.error("Failed to load digital pass");
     } finally {
@@ -45,7 +54,9 @@ const ETicket = () => {
   if (!booking) {
     return (
       <div className="py-12 text-center space-y-4">
+        <AlertTriangle size={40} className="mx-auto text-amber-400" />
         <h2 className="text-2xl font-bold text-white">Ticket Not Found</h2>
+        <p className="text-sm text-gray-400">This pass may not exist or you may not have access to it.</p>
         <button
           onClick={() => navigate("/bookings")}
           className="rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white"
@@ -79,7 +90,7 @@ const ETicket = () => {
         </div>
       </div>
 
-      {/* QR Pass Document */}
+      {/* QR Pass Document — now with real QR image */}
       <QRCodeCard booking={booking} onDownload={handlePrint} />
     </div>
   );

@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const app = require("./app");
 const connectDB = require("./configs/db");
+const expireBookings = require("./jobs/expireBookings");
 
 const PORT = process.env.PORT || 5000;
 
@@ -14,6 +15,9 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    
+    // Start background jobs
+    setInterval(expireBookings, 60 * 1000); // Run every minute
   });
 };
 

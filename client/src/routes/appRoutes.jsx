@@ -84,6 +84,7 @@ const AppRoutes = () => {
         <Route element={<SidebarLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/browse" element={<BrowseEvents />} />
+          <Route path="/browse/event/:id" element={<EventDetail />} />
           <Route path="/event/:id/book" element={<BookTickets />} />
           <Route path="/payment/:bookingId" element={<Payment />} />
           <Route path="/bookings" element={<MyBookings />} />

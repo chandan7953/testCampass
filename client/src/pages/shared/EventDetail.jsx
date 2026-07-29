@@ -13,9 +13,14 @@ import {
   ArrowLeft,
   Map,
   CheckCircle,
+  Building2,
+  Wifi,
+  ParkingCircle,
+  Projector,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import EventReviews from "../../components/EventReviews";
 
 import StatusBadge from "../../components/StatusBadge";
 import { formatDate, formatCurrency } from "../../utils/formatters";
@@ -27,19 +32,41 @@ const EventDetail = () => {
 
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(null);
+  const [availableSeats, setAvailableSeats] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [savingFav, setSavingFav] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
-    checkFavoriteStatus();
+    if (user) checkFavoriteStatus();
   }, [id]);
 
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/events/${id}`);
-      setEvent(res.data.data);
+      const eventRes = await api.get(`/events/${id}`);
+      setEvent(eventRes.data.data);
+
+      // Fetch tickets separately — may fail if tickets don't exist yet
+      try {
+        const ticketsRes = await api.get(`/tickets/event/${id}`);
+        const tickets = ticketsRes.data.data || [];
+
+        if (tickets.length > 0) {
+          // Ticket system exists — count available from ticket records
+          const seats = tickets.reduce(
+            (total, t) => total + (t.status === "active" ? t.remainingQuantity : 0),
+            0
+          );
+          setAvailableSeats(seats);
+        } else {
+          // No tickets created yet — fall back to event capacity
+          setAvailableSeats(null);
+        }
+      } catch {
+        // Ticket fetch failed — fall back to capacity-based estimate
+        setAvailableSeats(null);
+      }
     } catch (error) {
       toast.error("Failed to load event details");
     } finally {
@@ -49,11 +76,11 @@ const EventDetail = () => {
 
   const checkFavoriteStatus = async () => {
     try {
-      const res = await api.get("/favorites");
+      const res = await api.get("/users/favorites");
       const favList = res.data.data || [];
       setIsFavorite(favList.some((fav) => fav.event?._id === id || fav.event === id));
-    } catch (error) {
-      // Silent error
+    } catch {
+      // Silent
     }
   };
 
@@ -61,11 +88,11 @@ const EventDetail = () => {
     try {
       setSavingFav(true);
       if (isFavorite) {
-        await api.delete(`/favorites/${id}`);
+        await api.delete(`/users/favorites/${id}`);
         setIsFavorite(false);
         toast.success("Removed from favorites");
       } else {
-        await api.post("/favorites", { eventId: id });
+        await api.post(`/users/favorites/${id}`);
         setIsFavorite(true);
         toast.success("Added to favorites");
       }
@@ -100,11 +127,13 @@ const EventDetail = () => {
     );
   }
 
-  const seatsAvailable = (event.capacity || 100) - (event.bookedSeats || 0);
+  const venue = event.venue || {};
+  const seatsAvailable = availableSeats !== null ? availableSeats : (event.capacity || 0) - (event.bookedSeats || 0);
+  const isBookable = user?.role === "student" && event.status === "approved" && seatsAvailable > 0;
 
   return (
     <div className="space-y-8">
-      {/* Top Back Navigation Bar */}
+      {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
@@ -115,18 +144,20 @@ const EventDetail = () => {
         </button>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={toggleFavorite}
-            disabled={savingFav}
-            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition ${
-              isFavorite
-                ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                : "border-white/10 bg-[#12121A] text-gray-300 hover:bg-white/10"
-            }`}
-          >
-            <Heart size={16} className={isFavorite ? "fill-rose-400" : ""} />
-            {isFavorite ? "Saved" : "Save Event"}
-          </button>
+          {user && (
+            <button
+              onClick={toggleFavorite}
+              disabled={savingFav}
+              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition ${
+                isFavorite
+                  ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                  : "border-white/10 bg-[#12121A] text-gray-300 hover:bg-white/10"
+              }`}
+            >
+              <Heart size={16} className={isFavorite ? "fill-rose-400" : ""} />
+              {isFavorite ? "Saved" : "Save Event"}
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -140,7 +171,7 @@ const EventDetail = () => {
         </div>
       </div>
 
-      {/* Main Hero Header */}
+      {/* Hero Header */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] shadow-2xl backdrop-blur-xl">
         <div className="relative h-80 w-full overflow-hidden sm:h-96">
           <img
@@ -159,7 +190,7 @@ const EventDetail = () => {
               <Tag size={12} className="mr-1.5 inline text-blue-400" />
               {event.category?.name || "Campus Fest"}
             </span>
-            <StatusBadge status={event.status || "published"} />
+            <StatusBadge status={event.status || "pending"} />
           </div>
         </div>
 
@@ -181,44 +212,45 @@ const EventDetail = () => {
             </div>
           </div>
 
-          {/* Action Row */}
-          {user?.role === "student" && event.status === "published" && (
+          {/* Action Row — only for students on approved events */}
+          {user?.role === "student" && event.status === "approved" && (
             <div className="flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
               <button
                 onClick={() => navigate(`/event/${event._id || event.id}/book`)}
                 disabled={seatsAvailable <= 0}
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-105 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
               >
                 <Ticket size={20} />
                 <span>{seatsAvailable > 0 ? "Book Pass Now" : "Sold Out"}</span>
               </button>
 
-              <button
-                onClick={() => navigate(`/event/${event._id || event.id}/map`)}
-                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-white transition hover:bg-white/10"
-              >
-                <Map size={18} />
-                <span>View Venue Map</span>
-              </button>
+              {venue.latitude && venue.longitude && (
+                <button
+                  onClick={() => navigate(`/event/${event._id || event.id}/map`)}
+                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-white transition hover:bg-white/10"
+                >
+                  <Map size={18} />
+                  <span>View Venue Map</span>
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Details & Specs Grid */}
+      {/* Details Grid */}
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Left 2 Cols: Description & Schedule */}
+        {/* Left 2 cols */}
         <div className="space-y-8 lg:col-span-2">
           {/* About Event */}
           <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-4">
             <h3 className="text-xl font-bold text-white">About This Event</h3>
             <p className="text-sm leading-relaxed text-gray-300 whitespace-pre-line">
-              {event.description ||
-                "Join us for an incredible experience! Interact with industry leaders, participate in competitive challenges, and connect with fellow students across disciplines."}
+              {event.description || "Join us for an incredible campus experience!"}
             </p>
           </div>
 
-          {/* Event Rules & Info */}
+          {/* Guidelines */}
           <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-4">
             <h3 className="text-xl font-bold text-white">Guidelines & Details</h3>
             <ul className="space-y-3 text-sm text-gray-300">
@@ -234,12 +266,19 @@ const EventDetail = () => {
                 <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
                 <span>Please report 15 minutes prior to the scheduled start time.</span>
               </li>
+              {event.registrationDeadline && (
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Registration closes: {formatDate(event.registrationDeadline)}</span>
+                </li>
+              )}
             </ul>
           </div>
         </div>
 
-        {/* Right Col: Logistics Summary Card */}
+        {/* Right col */}
         <div className="space-y-6">
+          {/* Event Logistics */}
           <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-6">
             <h3 className="text-lg font-bold text-white border-b border-white/10 pb-3">Event Logistics</h3>
 
@@ -249,6 +288,9 @@ const EventDetail = () => {
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase">Date</p>
                   <p className="font-bold text-white">{formatDate(event.startDate)}</p>
+                  {event.endDate && event.endDate !== event.startDate && (
+                    <p className="text-xs text-gray-500 mt-0.5">to {formatDate(event.endDate)}</p>
+                  )}
                 </div>
               </div>
 
@@ -266,27 +308,78 @@ const EventDetail = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase">Venue Location</p>
-                  <p className="font-bold text-white">{event.venue?.name || "Main Campus Auditorium"}</p>
-                  {event.venue?.address && <p className="text-xs text-gray-400 mt-0.5">{event.venue.address}</p>}
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
                 <Users size={18} className="text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase">Availability</p>
                   <p className="font-bold text-white">
                     {seatsAvailable > 0 ? `${seatsAvailable} seats remaining` : "Fully Booked"}
                   </p>
+                  {event.capacity && (
+                    <p className="text-xs text-gray-500 mt-0.5">Total capacity: {event.capacity}</p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Venue Details Card */}
+          <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-5">
+            <h3 className="text-lg font-bold text-white border-b border-white/10 pb-3 flex items-center gap-2">
+              <Building2 size={18} className="text-blue-400" />
+              Venue Details
+            </h3>
+
+            <div className="space-y-4 text-sm text-gray-300">
+              <div className="flex items-start gap-3">
+                <MapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">{venue.name || "Campus Auditorium"}</p>
+                  {venue.address && <p className="text-xs text-gray-400 mt-0.5">{venue.address}</p>}
+                </div>
+              </div>
+
+              {venue.collegeName && (
+                <div className="flex items-start gap-3">
+                  <Building2 size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase">Institution</p>
+                    <p className="font-bold text-white">{venue.collegeName}</p>
+                  </div>
+                </div>
+              )}
+
+              {venue.capacity && (
+                <div className="flex items-start gap-3">
+                  <Users size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase">Venue Capacity</p>
+                    <p className="font-bold text-white">{venue.capacity} seats</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Venue Facilities */}
+              {venue.facilities && venue.facilities.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase">Facilities Available</p>
+                  <div className="flex flex-wrap gap-2">
+                    {venue.facilities.map((facility, idx) => (
+                      <span
+                        key={idx}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-gray-300"
+                      >
+                        {facility}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      <EventReviews eventId={id} user={user} />
     </div>
   );
 };

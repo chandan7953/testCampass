@@ -1,12 +1,13 @@
-import { Ticket, Calendar, MapPin, CheckCircle2, Download } from "lucide-react";
+import { Ticket, Calendar, MapPin, CheckCircle2, Download, AlertTriangle } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { formatDate } from "../utils/formatters";
 
 const QRCodeCard = ({ booking, onDownload }) => {
   if (!booking) return null;
 
-  const event = booking.event || {};
-  const bookingCode = booking.bookingCode || booking._id || "CP-883921";
+  const event = booking.eventId || booking.event || {};
+  const bookingCode = booking.bookingCode || booking._id || "CP-000000";
+  const isPaid = booking.paymentStatus === "paid";
 
   return (
     <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#181824] to-[#111118] p-6 shadow-2xl backdrop-blur-xl md:p-8">
@@ -16,39 +17,48 @@ const QRCodeCard = ({ booking, onDownload }) => {
           <Ticket className="text-blue-500" size={24} />
           <span className="font-extrabold tracking-wider text-white">CAMPUSPASS</span>
         </div>
-        <StatusBadge status={booking.status || "confirmed"} />
+        <StatusBadge status={booking.bookingStatus || "pending"} />
       </div>
 
-      {/* QR Code Graphic Placeholder */}
+      {/* QR Code */}
       <div className="my-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
-        <div className="relative flex h-44 w-44 items-center justify-center rounded-xl bg-white p-3 shadow-inner">
-          {/* Stylized Simulated QR Code Grid */}
-          <div className="grid grid-cols-5 gap-1.5 w-full h-full p-2 bg-white">
-            {Array.from({ length: 25 }).map((_, i) => (
-              <div
-                key={i}
-                className={`rounded-sm ${
-                  (i % 2 === 0 || i % 7 === 0 || i === 0 || i === 4 || i === 20 || i === 24)
-                    ? "bg-black"
-                    : "bg-gray-200"
-                }`}
-              />
-            ))}
+        {booking.qrCode ? (
+          /* Real QR code from backend (base64 data URL) */
+          <div className="relative flex h-48 w-48 items-center justify-center rounded-xl bg-white p-2 shadow-inner">
+            <img
+              src={booking.qrCode}
+              alt={`QR Pass — ${bookingCode}`}
+              className="h-full w-full object-contain"
+            />
           </div>
-        </div>
+        ) : (
+          /* Fallback when QR is missing */
+          <div className="flex h-48 w-48 flex-col items-center justify-center rounded-xl bg-white/10 text-center">
+            <AlertTriangle size={32} className="mb-2 text-amber-400" />
+            <p className="text-xs font-semibold text-gray-300">QR unavailable</p>
+            <p className="mt-1 text-[10px] text-gray-500">Contact support</p>
+          </div>
+        )}
+
         <p className="mt-4 font-mono text-xs font-semibold tracking-widest text-blue-400 uppercase">
           PASS ID: {bookingCode}
         </p>
+
+        {!isPaid && (
+          <p className="mt-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold text-amber-300">
+            Payment Pending — QR active after payment
+          </p>
+        )}
       </div>
 
       {/* Event Details */}
       <div className="space-y-4 rounded-2xl border border-white/5 bg-black/30 p-4">
         <div>
           <h4 className="text-lg font-bold text-white line-clamp-1">
-            {event.title || "Campus Tech Fest 2026"}
+            {event.title || "Campus Event"}
           </h4>
           <p className="text-xs text-gray-400 mt-0.5">
-            Category: {event.category?.name || "Workshop & Tech"}
+            Category: {event.category?.name || "General"}
           </p>
         </div>
 
@@ -60,18 +70,22 @@ const QRCodeCard = ({ booking, onDownload }) => {
 
           <div className="flex items-center gap-2">
             <MapPin size={14} className="text-blue-400" />
-            <span className="truncate">{event.venue?.name || "Main Auditorium, Block C"}</span>
+            <span className="truncate">{event.venue?.name || "Campus Venue"}</span>
           </div>
+
+          {event.venue?.address && (
+            <p className="pl-[22px] text-[11px] text-gray-500">{event.venue.address}</p>
+          )}
 
           <div className="flex items-center gap-2">
             <CheckCircle2 size={14} className="text-emerald-400" />
-            <span>Seats: {booking.seatsCount || booking.quantity || 1} Ticket(s)</span>
+            <span>{booking.quantity || 1} Ticket(s)</span>
           </div>
         </div>
       </div>
 
       {/* Action Button */}
-      {onDownload && (
+      {onDownload && isPaid && (
         <button
           onClick={onDownload}
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-500 shadow-lg shadow-blue-600/30"

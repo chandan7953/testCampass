@@ -21,12 +21,27 @@ const Favorites = () => {
   const fetchFavorites = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/favorites");
+      const res = await api.get("/users/favorites");
       setFavorites(res.data.data || []);
     } catch (error) {
       toast.error("Failed to load saved favorites");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const removeFavorite = async (eventId) => {
+    try {
+      await api.delete(`/users/favorites/${eventId}`);
+      setFavorites(
+        favorites.filter((fav) => {
+          const event = fav.event || fav;
+          return (event._id || event.id) !== eventId;
+        })
+      );
+      toast.success("Removed from favorites");
+    } catch (error) {
+      toast.error("Failed to remove favorite");
     }
   };
 
@@ -71,6 +86,7 @@ const Favorites = () => {
                 key={fav._id || event._id}
                 event={event}
                 onView={() => navigate(`/event/${event._id || event.id}`)}
+                onRemoveFavorite={() => removeFavorite(event._id || event.id)}
               />
             );
           })}

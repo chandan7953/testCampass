@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const Ticket = require("../models/Ticket");
 const Event = require("../models/Event");
@@ -14,13 +15,29 @@ const createBooking = async (req, res, next) => {
   try {
     const { ticketId, quantity } = req.body;
 
+    const requestedQuantity = Number(quantity);
+
+    if (
+      !ticketId ||
+      !Number.isInteger(requestedQuantity) ||
+      requestedQuantity < 1
+    ) {
+      throw new ApiError(
+        400,
+        "A ticket and a valid quantity are required"
+      );
+    }
+
     const ticket = await Ticket.findById(ticketId);
 
     if (!ticket) {
       throw new ApiError(404, "Ticket not found");
     }
 
-    if (ticket.remainingQuantity < quantity) {
+    if (
+      ticket.status !== "active" ||
+      ticket.remainingQuantity < requestedQuantity
+    ) {
       throw new ApiError(400, "Not enough tickets available");
     }
 
@@ -32,31 +49,26 @@ const createBooking = async (req, res, next) => {
 
     const bookingCode = generateBookingCode();
 
-    const totalAmount = ticket.price * quantity;
+    const totalAmount = ticket.price * requestedQuantity;
 
     const qrCode = await generateQRCode(bookingCode);
 
     const booking = await Booking.create({
       userId: req.user.id,
-
       eventId: ticket.eventId,
-
       ticketId,
-
-      quantity,
-
+      quantity: requestedQuantity,
       totalAmount,
-
       bookingCode,
-
       qrCode,
-
-      bookingStatus: "pending",
-
-      paymentStatus: "pending",
+      bookingStatus:
+        totalAmount === 0 ? "confirmed" : "pending",
+      paymentStatus:
+        totalAmount === 0 ? "paid" : "pending",
     });
 
-    ticket.remainingQuantity -= quantity;
+    // Always reduce ticket quantity immediately to lock seats
+    ticket.remainingQuantity -= requestedQuantity;
 
     if (ticket.remainingQuantity === 0) {
       ticket.status = "sold_out";
@@ -64,9 +76,19 @@ const createBooking = async (req, res, next) => {
 
     await ticket.save();
 
-    res
-      .status(201)
-      .json(apiResponse(201, "Booking created successfully", booking));
+    // If booking is free, increment event.bookedSeats immediately
+    if (totalAmount === 0) {
+      event.bookedSeats += requestedQuantity;
+      await event.save();
+    }
+
+    res.status(201).json(
+      apiResponse(
+        201,
+        "Booking created successfully",
+        booking
+      )
+    );
   } catch (error) {
     next(error);
   }
@@ -100,6 +122,10 @@ const cancelBooking = async (req, res, next) => {
 
     if (!booking) {
       throw new ApiError(404, "Booking not found");
+    }
+
+    if (booking.userId._id.toString() !== req.user.id && !["admin", "organizer"].includes(req.user.role)) {
+      throw new ApiError(403, "You are not allowed to view this booking");
     }
 
     if (booking.bookingStatus === "cancelled") {

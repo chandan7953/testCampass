@@ -29,6 +29,7 @@ const BrowseEvents = () => {
     try {
       setLoading(true);
       const res = await api.get("/events?status=published");
+      console.log(res.data);
       setEvents(res.data.data || []);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -76,17 +77,15 @@ const BrowseEvents = () => {
           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] p-1.5 backdrop-blur-xl">
             <button
               onClick={() => setViewMode("grid")}
-              className={`rounded-xl p-2.5 transition ${
-                viewMode === "grid" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
-              }`}
+              className={`rounded-xl p-2.5 transition ${viewMode === "grid" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
             >
               <Grid size={18} />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`rounded-xl p-2.5 transition ${
-                viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
-              }`}
+              className={`rounded-xl p-2.5 transition ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
+                }`}
             >
               <List size={18} />
             </button>

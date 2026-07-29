@@ -35,7 +35,7 @@ const Home = () => {
         api.get("/events?status=published"),
         api.get("/categories"),
         api.get("/bookings/my-bookings"),
-        api.get("/favorites"),
+        api.get("/users/favorites"),
       ]);
 
       if (eventsRes.status === "fulfilled") {

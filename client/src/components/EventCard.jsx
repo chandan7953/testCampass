@@ -22,6 +22,7 @@ const EventCard = ({
   onPublish,
   onCancel,
   onDelete,
+  onRemoveFavorite,
 }) => {
   const user = useSelector((state) => state.auth.user);
   const role = user?.role || "user";
@@ -94,7 +95,11 @@ const EventCard = ({
           <div className="flex items-center gap-2.5">
             <Users size={14} className="text-blue-400 shrink-0" />
             <span>
-              <strong className="text-white">{event.bookedSeats || 0}</strong> / {event.capacity || 100} seats reserved
+              <strong className="text-white">
+                {event.availableSeats !== undefined 
+                  ? (event.capacity || 100) - event.availableSeats 
+                  : (event.bookedSeats || 0)}
+              </strong> / {event.capacity || 100} seats reserved
             </span>
           </div>
         </div>
@@ -151,13 +156,27 @@ const EventCard = ({
             )}
           </div>
         ) : (
-          <button
-            onClick={onView}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600/90 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-blue-500"
-          >
-            <Eye size={14} />
-            Explore Event Details
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onView}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600/90 py-2.5 text-xs font-bold text-white shadow-lg transition hover:bg-blue-500"
+            >
+              <Eye size={14} />
+              Explore Event Details
+            </button>
+            {onRemoveFavorite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveFavorite();
+                }}
+                className="flex items-center justify-center rounded-2xl bg-rose-500/10 px-4 py-2.5 text-rose-400 transition hover:bg-rose-500/20"
+                title="Remove from Favorites"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
