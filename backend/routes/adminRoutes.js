@@ -8,7 +8,6 @@ const {
   getUserById,
   blockUser,
   unblockUser,
-  getAllEvents,
   approveEvent,
   rejectEvent,
   deleteEvent,
@@ -40,9 +39,6 @@ router.patch("/users/:id/unblock", unblockUser);
 
 router.patch("/users/:id/role", updateUserRole);
 
-
-
-router.get("/events", getAllEvents);
 
 router.patch("/events/:id/approve", approveEvent);
 

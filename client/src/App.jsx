@@ -25,18 +25,20 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 
+// Shared Pages
+import EventDetail from "./pages/shared/EventDetail.jsx";
+import EventMap from "./pages/shared/EventMap.jsx";
+import ETicket from "./pages/shared/ETicket.jsx";
+import Notifications from "./pages/shared/Notifications.jsx";
+import Profile from "./pages/shared/Profile.jsx";
+
 // Student Pages
 import Home from "./pages/student/Home";
 import BrowseEvents from "./pages/student/BrowseEvents";
-import EventDetail from "./pages/student/EventDetail";
-import EventMap from "./pages/student/EventMap";
 import BookTickets from "./pages/student/BookTickets";
 import Payment from "./pages/student/Payment";
-import ETicket from "./pages/student/ETicket";
 import MyBookings from "./pages/student/MyBookings";
 import Favorites from "./pages/student/Favorites";
-import Notifications from "./pages/student/Notifications";
-import Profile from "./pages/student/Profile";
 
 // Organizer Pages
 import OrgDashboard from "./pages/organizer/OrgDashboard";
@@ -46,13 +48,16 @@ import Attendees from "./pages/organizer/Attendees";
 import QRScanPage from "./pages/organizer/QRScanPage";
 
 // Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
-import ManageAllEvents from "./pages/admin/ManageAllEvents.jsx";
-import ManageUsers from "./pages/admin/ManageUsers.jsx";
-import UserDetails from "./pages/admin/UserDetails.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageAllEvents from "./pages/admin/ManageAllEvents";
+import ManageUsers from "./pages/admin/ManageUsers";
+import UserDetails from "./pages/admin/UserDetails";
+import ManageCategories from "./pages/admin/ManageCategories";
+import AddCategory from "./pages/admin/AddCategory";
 
 function App() {
   const dispatch = useDispatch();
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,9 +74,9 @@ function App() {
 
         dispatch(
           loginSuccess({
-            token: token,
-            user: response.data.data, // <-- Correct
-          }),
+            token,
+            user: response.data.data,
+          })
         );
       } catch (error) {
         localStorage.removeItem("token");
@@ -86,7 +91,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         Loading...
       </div>
     );
@@ -97,7 +102,7 @@ function App() {
       <Toaster position="top-right" />
 
       <Routes>
-        {/* Guest-only pages: landing + auth routes */}
+        {/* Guest Routes */}
         <Route element={<GuestRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Splash />} />
@@ -111,15 +116,18 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
-        {/* Shared Protected Routes */}
+        {/* Shared Protected Pages */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/event/:id" element={<EventDetail />} />
-          <Route path="/event/:id/map" element={<EventMap />} />
-          <Route path="/ticket/:bookingId" element={<ETicket />} />
-          <Route path="/notifications" element={<Notifications />} />
+          <Route element={<SidebarLayout />}>
+            <Route path="/event/:id" element={<EventDetail />} />
+            <Route path="/event/:id/map" element={<EventMap />} />
+            <Route path="/ticket/:bookingId" element={<ETicket />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
         </Route>
 
-        {/* Student */}
+        {/* Student Routes */}
         <Route element={<ProtectedRoute role="student" />}>
           <Route element={<SidebarLayout />}>
             <Route path="/home" element={<Home />} />
@@ -128,11 +136,10 @@ function App() {
             <Route path="/payment/:bookingId" element={<Payment />} />
             <Route path="/bookings" element={<MyBookings />} />
             <Route path="/favorites" element={<Favorites />} />
-            <Route path="/profile" element={<Profile />} />
           </Route>
         </Route>
 
-        {/* Organizer */}
+        {/* Organizer Routes */}
         <Route element={<ProtectedRoute role="organizer" />}>
           <Route element={<SidebarLayout />}>
             <Route path="/organizer/dashboard" element={<OrgDashboard />} />
@@ -143,19 +150,33 @@ function App() {
               path="/organizer/attendees/:eventId"
               element={<Attendees />}
             />
-            <Route path="/organizer/scan/:eventId" element={<QRScanPage />} />
+            <Route
+              path="/organizer/scan/:eventId"
+              element={<QRScanPage />}
+            />
           </Route>
         </Route>
 
-        {/* Admin */}
+        {/* Admin Routes */}
         <Route element={<ProtectedRoute role="admin" />}>
           <Route element={<SidebarLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/events" element={<ManageAllEvents />} />
-
             <Route path="/admin/users" element={<ManageUsers />} />
-
             <Route path="/admin/users/:id" element={<UserDetails />} />
+
+            <Route
+              path="/admin/categories"
+              element={<ManageCategories />}
+            />
+            <Route
+              path="/admin/categories/add"
+              element={<AddCategory />}
+            />
+            <Route
+              path="/admin/categories/edit/:id"
+              element={<AddCategory />}
+            />
           </Route>
         </Route>
 

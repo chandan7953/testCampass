@@ -238,23 +238,6 @@ const updateUserRole = async (req, res, next) => {
   }
 };
 
-const getAllEvents = async (req, res, next) => {
-  try {
-    const events = await Event.find()
-      .populate("organizer", "fullName email")
-      .populate("category")
-      .sort({
-        createdAt: -1,
-      });
-
-    res
-      .status(200)
-      .json(apiResponse(200, "Events fetched successfully", events));
-  } catch (error) {
-    next(error);
-  }
-};
-
 const approveEvent = async (req, res, next) => {
   try {
     const event = await Event.findByIdAndUpdate(
@@ -360,7 +343,6 @@ module.exports = {
   blockUser,
   unblockUser,
   updateUserRole,
-  getAllEvents,
   approveEvent,
   rejectEvent,
   deleteEvent,

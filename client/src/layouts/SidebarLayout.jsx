@@ -23,7 +23,11 @@ import {
   ScanLine,
   Menu,
   X,
+  Tag,
+  Bell,
 } from "lucide-react";
+
+
 
 import { logout } from "../redux/authSlice";
 import NotificationBell from "../components/NotificationBell";
@@ -119,24 +123,40 @@ const SidebarLayout = () => {
     },
   ];
 
-  const adminLinks = [
-    {
-      label: "Dashboard",
-      path: "/admin/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      label: "Events",
-      path: "/admin/events",
-      icon: ClipboardList,
-    },
-    {
-      label: "Users",
-      path: "/admin/users",
-      icon: Users,
-    },
-  ];
+  
 
+const adminLinks = [
+  {
+    label: "Dashboard",
+    path: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Events",
+    path: "/admin/events",
+    icon: ClipboardList,
+  },
+  {
+    label: "Categories",
+    path: "/admin/categories",
+    icon: Tag,
+  },
+  {
+    label: "Users",
+    path: "/admin/users",
+    icon: Users,
+  },
+  {
+    label: "Notifications",
+    path: "/notifications",
+    icon: Bell,
+  },
+  {
+      label: "Profile",
+      path: "/profile",
+      icon: User,
+    },
+];
   const links =
     user?.role === "admin"
       ? adminLinks
@@ -267,7 +287,7 @@ const SidebarLayout = () => {
 
           <div className="flex items-center gap-5">
 
-            <NotificationBell />
+            <NotificationBell/>
 
             <div
               onClick={() => navigate("/profile")}
