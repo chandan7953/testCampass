@@ -1,7 +1,2 @@
-import React from "react";
-
-const EventDetail = () => {
-  return <div>EventDetail</div>;
-};
-
+import EventDetail from "../shared/EventDetail";
 export default EventDetail;

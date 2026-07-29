@@ -1,7 +1,2 @@
-import React from "react";
-
-const EventMap = () => {
-  return <div>EventMap</div>;
-};
-
+import EventMap from "../shared/EventMap";
 export default EventMap;

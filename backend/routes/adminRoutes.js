@@ -8,9 +8,6 @@ const {
   getUserById,
   blockUser,
   unblockUser,
-  approveEvent,
-  rejectEvent,
-  deleteEvent,
   getAllPayments,
   getAllBookings,
   updateUserRole,
@@ -38,13 +35,6 @@ router.patch("/users/:id/block", blockUser);
 router.patch("/users/:id/unblock", unblockUser);
 
 router.patch("/users/:id/role", updateUserRole);
-
-
-router.patch("/events/:id/approve", approveEvent);
-
-router.patch("/events/:id/reject", rejectEvent);
-
-router.delete("/events/:id", deleteEvent);
 
 
 

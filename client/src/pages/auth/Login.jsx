@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 
 import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
-import { useDispatch } from "react-redux";
+import Logo from "../../components/Logo";
 import { loginSuccess } from "../../redux/authSlice";
 
 const Login = () => {
@@ -29,305 +30,108 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!form.email || !form.password) {
-    return toast.error("Please fill all fields");
-  }
+    if (!form.email || !form.password) {
+      return toast.error("Please enter email and password");
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
+      const response = await api.post("/auth/login", form);
+      const { token, user } = response.data.data;
 
-    const response = await api.post("/auth/login", form);
+      localStorage.setItem("token", token);
+      dispatch(loginSuccess({ token, user }));
 
-    const { token, user } = response.data.data;
+      toast.success(`Welcome back, ${user.fullName}!`);
 
+      const routes = {
+        admin: "/admin/dashboard",
+        organizer: "/organizer/dashboard",
+        student: "/home",
+      };
 
-    localStorage.setItem("token", token);
-
-    dispatch(
-      loginSuccess({
-        token,
-        user,
-      })
-    );
-
-    toast.success("Welcome back!");
-
-    const routes = {
-      admin: "/admin/dashboard",
-      organizer: "/organizer/dashboard",
-      student: "/home",
-    };
-
-    navigate(routes[user.role] || "/", {
-      replace: true,
-    });
-  } catch (error) {
-    toast.error(
-      error.response?.data?.message || "Login failed"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      navigate(routes[user.role] || "/", { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed. Check your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div
-      className="
-      min-h-screen
-      flex
-      bg-black
-      text-white
-    "
-    >
-      {/* LEFT VISUAL SECTION */}
+    <div className="flex min-h-screen bg-[#0A0A0F] text-white">
+      {/* Visual Showcase (Desktop Left) */}
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-white/10 bg-[#111118] p-12 lg:flex">
+        {/* Glow Spheres */}
+        <div className="absolute -left-20 top-20 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+        <div className="absolute right-10 bottom-20 h-80 w-80 rounded-full bg-indigo-600/20 blur-3xl" />
 
-      <div
-        className="
-        hidden
-        lg:flex
-        lg:w-1/2
-        bg-[#151515]
-        flex-col
-        justify-between
-        p-12
-        relative
-        overflow-hidden
-      "
-      >
-        <div
-          className="
-          absolute
-          top-32
-          left-32
-          h-72
-          w-72
-          rounded-full
-          bg-blue-500/20
-          blur-3xl
-        "
-        />
+        <div className="relative z-10">
+          <Logo />
+        </div>
 
-        <div
-          className="
-          relative
-          flex
-          h-full
-          items-center
-          justify-center
-        "
-        >
-          {/* EVENT CARD */}
-
-          <div
-            className="
-            w-80
-            rounded-3xl
-            border
-            border-white/10
-            bg-white/5
-            p-6
-            backdrop-blur-xl
-          "
-          >
-            <div
-              className="
-              flex
-              justify-between
-              items-center
-            "
-            >
+        {/* Floating Pass Card Showcase */}
+        <div className="relative z-10 mx-auto my-auto max-w-sm space-y-6">
+          <div className="rounded-3xl border border-white/15 bg-white/5 p-6 backdrop-blur-2xl shadow-2xl">
+            <div className="flex items-center justify-between">
               <div>
-                <p
-                  className="
-                  text-xs
-                  text-gray-400
-                "
-                >
-                  EVENT PASS
-                </p>
-
-                <h2
-                  className="
-                  mt-2
-                  text-2xl
-                  font-bold
-                "
-                >
-                  Tech Fest 2026
-                </h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400">OFFICIAL EVENT PASS</p>
+                <h3 className="mt-1 text-2xl font-extrabold text-white">Annual TechFest 2026</h3>
               </div>
-
-              <div
-                className="
-                rounded-xl
-                bg-blue-500/20
-                p-3
-              "
-              >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 🎟️
               </div>
             </div>
 
-            <div
-              className="
-              mt-8
-              rounded-2xl
-              bg-black/40
-              p-4
-            "
-            >
-              <p
-                className="
-                text-xs
-                text-gray-400
-              "
-              >
-                EVENT TYPE
-              </p>
-
-              <p
-                className="
-                mt-1
-                font-semibold
-              "
-              >
-                College Cultural & Tech Event
-              </p>
+            <div className="mt-6 rounded-2xl bg-black/40 p-4 border border-white/5 space-y-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase">ACCESS ROLE</p>
+              <p className="text-sm font-bold text-white">Verified Student Pass</p>
             </div>
 
-            <div
-              className="
-              mt-5
-              flex
-              items-center
-              justify-between
-            "
-            >
-              <span
-                className="
-                rounded-full
-                bg-green-500/20
-                px-3
-                py-1
-                text-xs
-                text-green-400
-              "
-              >
+            <div className="mt-4 flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Confirmed
               </span>
-
-              <div
-                className="
-                rounded-lg
-                bg-white
-                px-3
-                py-2
-                text-black
-                text-sm
-                font-bold
-              "
-              >
-                QR
-              </div>
+              <span className="font-mono text-xs font-bold text-gray-400">#CP-2026-X9</span>
             </div>
           </div>
 
-          {/* SMALL EVENT TAGS */}
-
-          <div
-            className="
-            absolute
-            left-10
-            top-1/3
-            rounded-xl
-            border
-            border-white/10
-            bg-white/5
-            px-4
-            py-3
-            backdrop-blur
-          "
-          >
-            🎤 Music Night
-          </div>
-
-          <div
-            className="
-            absolute
-            right-10
-            bottom-1/3
-            rounded-xl
-            border
-            border-white/10
-            bg-white/5
-            px-4
-            py-3
-            backdrop-blur
-          "
-          >
-            🚀 Hackathon
+          <div className="flex items-center justify-center gap-3">
+            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-gray-300 backdrop-blur-md">
+              ✨ 1-Click Ticket Booking
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-gray-300 backdrop-blur-md">
+              ⚡ Instant QR Pass
+            </span>
           </div>
         </div>
 
-        <p
-          className="
-          text-sm
-          text-gray-500
-        "
-        >
-          © {new Date().getFullYear()} CampusPass
-        </p>
+        <div className="relative z-10 text-xs text-gray-500">
+          © {new Date().getFullYear()} CampusPass Platform. All rights reserved.
+        </div>
       </div>
 
-      {/* LOGIN SECTION */}
+      {/* Login Form (Right) */}
+      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md space-y-8">
+          <div className="space-y-2 text-center lg:text-left">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Welcome Back
+            </h1>
+            <p className="text-sm text-gray-400">
+              Sign in to manage your bookings and explore campus events.
+            </p>
+          </div>
 
-      <div
-        className="
-        flex
-        flex-1
-        items-center
-        justify-center
-        p-8
-      "
-      >
-        <div
-          className="
-          w-full
-          max-w-md
-        "
-        >
-          <h1
-            className="
-            text-3xl
-            font-bold
-          "
-          >
-            Welcome Back
-          </h1>
-
-          <p
-            className="
-            mt-2
-            text-gray-400
-          "
-          >
-            Sign in to continue
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            className="
-              mt-8
-              space-y-5
-            "
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             <InputField
               label="Email Address"
               name="email"
               type="email"
-              placeholder="example@gmail.com"
+              placeholder="student@college.edu"
               value={form.email}
               onChange={handleChange}
               icon={Mail}
@@ -338,7 +142,7 @@ const Login = () => {
                 label="Password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="********"
+                placeholder="••••••••"
                 value={form.password}
                 onChange={handleChange}
                 icon={Lock}
@@ -347,56 +151,35 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="
-                  absolute
-                  right-4
-                  top-10
-                  text-gray-400
-                "
+                className="absolute right-4 top-10 text-gray-400 hover:text-white transition"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <div
-              className="
-              flex
-              justify-end
-            "
-            >
+            <div className="flex justify-end">
               <Link
                 to="/forgot-password"
-                className="
-                  text-sm
-                  text-blue-500
-                "
+                className="text-xs font-semibold text-blue-400 hover:underline"
               >
                 Forgot Password?
               </Link>
             </div>
 
             <Button type="submit" loading={loading}>
-              Sign In
+              <span className="flex items-center justify-center gap-2">
+                <span>Sign In to Account</span>
+                <ArrowRight size={16} />
+              </span>
             </Button>
           </form>
 
-          <p
-            className="
-            mt-8
-            text-gray-400
-          "
-          >
+          <div className="text-center text-sm text-gray-400">
             Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="
-                text-blue-500
-                font-semibold
-              "
-            >
+            <Link to="/register" className="font-bold text-blue-400 hover:underline">
               Create Account
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

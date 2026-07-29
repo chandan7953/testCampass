@@ -1,7 +1,2 @@
-import React from "react";
-
-const Notifications = () => {
-  return <div>Notifications</div>;
-};
-
+import Notifications from "../shared/Notifications";
 export default Notifications;

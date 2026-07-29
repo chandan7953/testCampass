@@ -1,207 +1,147 @@
-import { Users, CalendarDays, Ticket, ShieldCheck } from "lucide-react";
+import { Users, CalendarDays, Ticket, ShieldCheck, ArrowRight } from "lucide-react";
 import aboutCampus from "../../assets/about-campus.png";
 import { useNavigate } from "react-router-dom";
+
 const About = () => {
   const navigate = useNavigate();
+
   const stats = [
     { value: "100+", label: "Events Organized" },
     { value: "10K+", label: "Students Connected" },
-    { value: "50+", label: "Colleges" },
-    { value: "99%", label: "User Satisfaction" },
+    { value: "50+", label: "Campus Chapters" },
+    { value: "99.8%", label: "Platform Uptime" },
   ];
 
   const features = [
     {
       icon: CalendarDays,
-      title: "Discover Events",
+      title: "Discover Campus Events",
       description:
-        "Browse technical, cultural, sports, workshops, hackathons, and college festivals from one platform.",
+        "Browse technical, cultural, sports, workshops, hackathons, and college festivals all from one unified portal.",
     },
     {
       icon: Ticket,
-      title: "Easy Registration",
+      title: "Instant Digital Passes",
       description:
-        "Register in seconds and receive your digital event pass with QR code.",
+        "Register in seconds and receive your verified digital E-Ticket with QR code directly on your profile.",
     },
     {
       icon: Users,
-      title: "Student Community",
+      title: "Student Chapter Network",
       description:
-        "Connect with students, organizers, and participate in exciting campus activities.",
+        "Connect with student organizations, clubs, and peers to collaborate on impactful events.",
     },
     {
       icon: ShieldCheck,
-      title: "Secure Platform",
+      title: "Secure Verification",
       description:
-        "Safe authentication, verified organizers, and secure event registrations.",
+        "Fast QR scanning for organizers with instant attendee check-in and anti-duplication protection.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-white">
-
-      {/* Hero */}
-      <section className="border-b border-gray-800">
-        <div className="mx-auto max-w-7xl px-6 py-24 text-center">
-
-          <span className="rounded-full bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400">
+      {/* Hero Section */}
+      <section className="relative border-b border-white/10 py-20 lg:py-28">
+        <div className="mx-auto max-w-5xl px-6 text-center space-y-6">
+          <span className="inline-block rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-400">
             About CampusPass
           </span>
 
-          <h1 className="mt-6 text-5xl font-bold leading-tight lg:text-6xl">
-            Making Campus Events
-            <span className="block text-blue-500">
-              Simple & Accessible
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            Making Campus Events <br />
+            <span className="bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+              Simple, Digital & Instant
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-400">
-            CampusPass is a smart event management platform designed for
-            colleges and universities. Students can discover, register,
-            and attend events effortlessly while organizers manage
-            everything from one place.
+          <p className="mx-auto max-w-3xl text-base leading-relaxed text-gray-400 sm:text-lg">
+            CampusPass is an all-in-one event hub designed for university students, organizers, and campus administrators. Eliminate physical queues, paper passes, and fragmented forms.
           </p>
-
         </div>
       </section>
 
-      {/* Mission */}
-      <section className="mx-auto grid max-w-7xl gap-16 px-6 py-20 lg:grid-cols-2">
-
-        <div>
+      {/* Mission Section */}
+      <section className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2 items-center">
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] p-2 shadow-2xl">
           <img
             src={aboutCampus}
-            alt="CampusPass"
-            className="rounded-3xl border border-gray-800 object-cover"
+            alt="Campus Event Experience"
+            className="w-full rounded-2xl object-cover"
           />
         </div>
 
-        <div className="flex flex-col justify-center">
-
-          <h2 className="text-4xl font-bold">
-            Our Mission
-          </h2>
-
-          <p className="mt-6 leading-8 text-gray-400">
-            We believe every student should have easy access to exciting
-            opportunities happening on campus. CampusPass eliminates
-            paperwork and long registration queues by providing a modern
-            digital platform for event discovery, registration, and
-            attendance.
+        <div className="space-y-6">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-blue-400">Our Mission</span>
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">Empowering Campus Communities Through Seamless Events</h2>
+          <p className="text-sm leading-relaxed text-gray-400">
+            We believe that university life is enriched when students can easily explore opportunities outside the classroom. From coding hackathons to cultural nights, CampusPass removes registration friction.
           </p>
-
-          <p className="mt-5 leading-8 text-gray-400">
-            Whether it's a coding competition, cultural fest,
-            entrepreneurship summit, or sports event, CampusPass helps
-            students never miss an opportunity.
+          <p className="text-sm leading-relaxed text-gray-400">
+            For organizers, CampusPass provides automated seat tracking, venue assignment, ticket validation, and real-time attendance reporting.
           </p>
-
         </div>
-
       </section>
 
-      {/* Features */}
-
-      <section className="bg-[#111116] py-20">
-
+      {/* Features Grid */}
+      <section className="border-t border-white/10 bg-[#0E0E14] py-20">
         <div className="mx-auto max-w-7xl px-6">
-
-          <div className="text-center">
-
-            <h2 className="text-4xl font-bold">
-              Why Choose CampusPass?
-            </h2>
-
-            <p className="mt-4 text-gray-400">
-              Everything you need to manage and participate in campus
-              events.
-            </p>
-
+          <div className="text-center space-y-3 mb-16">
+            <h2 className="text-3xl font-extrabold text-white">Why Universities Choose CampusPass</h2>
+            <p className="text-sm text-gray-400">Built specifically for modern academic ecosystems.</p>
           </div>
 
-          <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => {
               const Icon = feature.icon;
-
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-gray-800 bg-[#18181F] p-8 transition hover:border-blue-500"
+                  className="rounded-3xl border border-white/10 bg-[#12121A] p-6 backdrop-blur-xl transition hover:-translate-y-1 hover:border-blue-500/40"
                 >
-                  <div className="mb-6 inline-flex rounded-xl bg-blue-500/10 p-4">
-                    <Icon className="text-blue-500" size={28} />
+                  <div className="mb-4 inline-flex rounded-2xl bg-blue-500/10 p-3.5 text-blue-400 border border-blue-500/20">
+                    <Icon size={24} />
                   </div>
-
-                  <h3 className="text-xl font-semibold">
-                    {feature.title}
-                  </h3>
-
-                  <p className="mt-3 text-gray-400 leading-7">
-                    {feature.description}
-                  </p>
+                  <h3 className="text-lg font-bold text-white">{feature.title}</h3>
+                  <p className="mt-2 text-xs leading-relaxed text-gray-400">{feature.description}</p>
                 </div>
               );
             })}
-
           </div>
-
         </div>
-
       </section>
 
-      {/* Stats */}
-
-      <section className="py-20">
-
+      {/* Stats Section */}
+      <section className="py-20 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-6">
-
-          <div className="grid grid-cols-2 gap-8 text-center lg:grid-cols-4">
-
+          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
             {stats.map((item, index) => (
               <div
                 key={index}
-                className="rounded-2xl border border-gray-800 bg-[#111116] p-8"
+                className="rounded-3xl border border-white/10 bg-[#12121A] p-8 text-center backdrop-blur-xl"
               >
-                <h2 className="text-4xl font-bold text-blue-500">
-                  {item.value}
-                </h2>
-
-                <p className="mt-3 text-gray-400">
-                  {item.label}
-                </p>
+                <h3 className="text-3xl font-black text-blue-400 sm:text-4xl">{item.value}</h3>
+                <p className="mt-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{item.label}</p>
               </div>
             ))}
-
           </div>
-
         </div>
-
       </section>
 
       {/* CTA */}
-
-      <section className="border-t border-gray-800 py-20">
-
-        <div className="mx-auto max-w-4xl px-6 text-center">
-
-          <h2 className="text-4xl font-bold">
-            Join the CampusPass Community
-          </h2>
-
-          <p className="mt-6 text-lg text-gray-400">
-            Discover amazing events, connect with fellow students,
-            and create unforgettable campus experiences.
-          </p>
-
-          <button onClick={() => navigate("/login")} className="mt-10 rounded-xl bg-blue-600 px-8 py-4 font-semibold transition hover:bg-blue-700">
-            Get Started
+      <section className="border-t border-white/10 py-20 bg-gradient-to-b from-[#0A0A0F] to-[#0E0E14]">
+        <div className="mx-auto max-w-4xl px-6 text-center space-y-6">
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">Ready to Elevate Your Campus Events?</h2>
+          <p className="text-sm text-gray-400">Join thousands of students and organizers using CampusPass today.</p>
+          <button
+            onClick={() => navigate("/register")}
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-sm font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-105"
+          >
+            <span>Create Student Account</span>
+            <ArrowRight size={18} />
           </button>
-
         </div>
-
       </section>
-
     </div>
   );
 };

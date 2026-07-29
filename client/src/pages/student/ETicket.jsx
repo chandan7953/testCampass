@@ -1,7 +1,2 @@
-import React from "react";
-
-const ETicket = () => {
-  return <div>ETicket</div>;
-};
-
+import ETicket from "../shared/ETicket";
 export default ETicket;

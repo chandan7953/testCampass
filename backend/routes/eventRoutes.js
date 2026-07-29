@@ -2,7 +2,6 @@ const express = require("express");
 
 const router = express.Router();
 
-
 const {
   createEvent,
   updateEvent,
@@ -13,140 +12,34 @@ const {
   approveEvent,
   rejectEvent,
   cancelEvent,
+  getAdminEvents,
 } = require("../controllers/eventController");
 
-
-const verifyToken =
-require("../middlewares/verifyToken");
-
-
-const authorizeRole =
-require("../middlewares/authorizeRole");
-
-
-const upload =
-require("../configs/multer");
-
-
+const verifyToken = require("../middlewares/verifyToken");
+const authorizeRole = require("../middlewares/authorizeRole");
+const upload = require("../configs/multer");
 
 
 // ==========================
 // Public Routes
 // ==========================
 
+// Get all APPROVED / published events
+router.get("/", getAllEvents);
 
-// Get all approved events
+// ==========================
+// Admin Only Routes (must be before /:id)
+// ==========================
 
+// Get ALL events including pending, rejected, cancelled
 router.get(
-  "/",
-  getAllEvents
-);
-
-
-
-// Get event details
-
-router.get(
-  "/:id",
-  getEventById
-);
-
-
-
-
-// ==========================
-// Organizer + Admin Routes
-// ==========================
-
-
-
-// Create Event
-
-router.post(
-  "/",
+  "/admin/all",
   verifyToken,
-  authorizeRole(
-    "organizer",
-    "admin"
-  ),
-  upload.single("poster"),
-  createEvent
+  authorizeRole("admin"),
+  getAdminEvents
 );
 
-
-
-
-// Update Event
-
-router.put(
-  "/:id",
-  verifyToken,
-  authorizeRole(
-    "organizer",
-    "admin"
-  ),
-  upload.single("poster"),
-  updateEvent
-);
-
-
-
-
-// Delete Event
-
-router.delete(
-  "/:id",
-  verifyToken,
-  authorizeRole(
-    "organizer",
-    "admin"
-  ),
-  deleteEvent
-);
-
-
-
-
-// Organizer My Events
-
-router.get(
-  "/organizer/my-events",
-  verifyToken,
-  authorizeRole(
-    "organizer",
-    "admin"
-  ),
-  getMyEvents
-);
-
-
-
-
-// Cancel Event
-
-router.patch(
-  "/:id/cancel",
-  verifyToken,
-  authorizeRole(
-    "organizer",
-    "admin"
-  ),
-  cancelEvent
-);
-
-
-
-
-
-
-// ==========================
-// Admin Only Routes
-// ==========================
-
-
-
-// Approve Event
-
+// Approve event
 router.patch(
   "/:id/approve",
   verifyToken,
@@ -154,11 +47,7 @@ router.patch(
   approveEvent
 );
 
-
-
-
-// Reject Event
-
+// Reject event
 router.patch(
   "/:id/reject",
   verifyToken,
@@ -166,8 +55,57 @@ router.patch(
   rejectEvent
 );
 
+// ==========================
+// Organizer + Admin Routes
+// ==========================
 
+// Organizer: get my events (must be before /:id)
+router.get(
+  "/organizer/my-events",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  getMyEvents
+);
 
+// Create event
+router.post(
+  "/",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  upload.single("poster"),
+  createEvent
+);
+
+// Update event
+router.put(
+  "/:id",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  upload.single("poster"),
+  updateEvent
+);
+
+// Delete event (organizer owns it OR admin)
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  deleteEvent
+);
+
+// Cancel event
+router.patch(
+  "/:id/cancel",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  cancelEvent
+);
+
+// ==========================
+// Public — single event detail (last, wildcard)
+// ==========================
+
+router.get("/:id", getEventById);
 
 
 module.exports = router;

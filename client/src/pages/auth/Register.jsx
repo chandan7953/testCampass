@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
 
 import api from "../../api/axios";
 import InputField from "../../components/InputField";
 import Button from "../../components/Button";
+import Logo from "../../components/Logo";
 import { loginSuccess } from "../../redux/authSlice";
-import { useDispatch } from "react-redux";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -34,250 +35,81 @@ const Register = () => {
     e.preventDefault();
 
     if (!form.fullName || !form.email || !form.mobile || !form.password) {
-      return toast.error("Please fill all fields");
+      return toast.error("Please fill all required fields");
     }
 
     try {
       setLoading(true);
-
       const response = await api.post("/auth/register", form);
-
       const { token, user } = response.data.data;
 
-      // Save Token
       localStorage.setItem("token", token);
+      dispatch(loginSuccess({ token, user }));
 
-      // Update Redux
-      dispatch(
-        loginSuccess({
-          token,
-          user,
-        }),
-      );
-
-      toast.success("Account created successfully");
-
-      navigate("/home", {
-        replace: true,
-      });
+      toast.success("Account created successfully!");
+      navigate("/home", { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      toast.error(error.response?.data?.message || "Registration failed. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="
-      min-h-screen
-      flex
-      bg-black
-      text-white
-      "
-    >
-      {/* LEFT SECTION */}
+    <div className="flex min-h-screen bg-[#0A0A0F] text-white">
+      {/* Left Visual Banner */}
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-white/10 bg-[#111118] p-12 lg:flex">
+        <div className="absolute -left-20 top-20 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+        <div className="absolute right-10 bottom-20 h-80 w-80 rounded-full bg-purple-600/20 blur-3xl" />
 
-      <div
-        className="
-        hidden
-        lg:flex
-        lg:w-1/2
-        bg-[#151515]
-        flex-col
-        justify-between
-        p-12
-        relative
-        overflow-hidden
-        "
-      >
-        <div
-          className="
-          absolute
-          top-32
-          left-32
-          h-72
-          w-72
-          rounded-full
-          bg-blue-500/20
-          blur-3xl
-          "
-        />
+        <div className="relative z-10">
+          <Logo />
+        </div>
 
-        <div
-          className="
-          relative
-          flex
-          h-full
-          items-center
-          justify-center
-          "
-        >
-          {/* CREATE ACCOUNT CARD */}
-
-          <div
-            className="
-            w-80
-            rounded-3xl
-            border
-            border-white/10
-            bg-white/5
-            p-6
-            backdrop-blur-xl
-            "
-          >
-            <p
-              className="
-              text-xs
-              text-gray-400
-              "
-            >
-              JOIN CAMPUSPASS
-            </p>
-
-            <h2
-              className="
-              mt-3
-              text-3xl
-              font-bold
-              "
-            >
-              Create Your
-              <br />
-              Account
+        <div className="relative z-10 mx-auto my-auto max-w-sm space-y-6">
+          <div className="rounded-3xl border border-white/15 bg-white/5 p-8 backdrop-blur-2xl shadow-2xl">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">JOIN CAMPUSPASS</span>
+            <h2 className="mt-2 text-3xl font-extrabold text-white leading-tight">
+              Create Your Digital Campus Pass
             </h2>
 
-            <div
-              className="
-              mt-8
-              rounded-2xl
-              bg-black/40
-              p-5
-              "
-            >
-              <p className="text-sm text-gray-400">Everything in one place</p>
-
-              <p
-                className="
-              mt-4
-              font-semibold
-              "
-              >
-                🎓 College Events
+            <div className="mt-6 space-y-3 rounded-2xl bg-black/40 p-4 border border-white/5 text-xs text-gray-300">
+              <p className="flex items-center gap-2 font-semibold">
+                <span className="text-blue-400">✓</span> Instant QR Code Pass Generation
               </p>
-
-              <p
-                className="
-              mt-3
-              font-semibold
-              "
-              >
-                🎟 Digital Passes
+              <p className="flex items-center gap-2 font-semibold">
+                <span className="text-blue-400">✓</span> Real-Time Schedule & Venue Alerts
               </p>
-
-              <p
-                className="
-              mt-3
-              font-semibold
-              "
-              >
-                🚀 Campus Experience
+              <p className="flex items-center gap-2 font-semibold">
+                <span className="text-blue-400">✓</span> Save & Favorite Upcoming Fests
               </p>
             </div>
           </div>
-
-          <div
-            className="
-            absolute
-            left-10
-            top-1/3
-            rounded-xl
-            border
-            border-white/10
-            bg-white/5
-            px-4
-            py-3
-            backdrop-blur
-            "
-          >
-            🎤 Events
-          </div>
-
-          <div
-            className="
-            absolute
-            right-10
-            bottom-1/3
-            rounded-xl
-            border
-            border-white/10
-            bg-white/5
-            px-4
-            py-3
-            backdrop-blur
-            "
-          >
-            👥 Community
-          </div>
         </div>
 
-        <p
-          className="
-          text-sm
-          text-gray-500
-          "
-        >
-          © {new Date().getFullYear()} CampusPass
-        </p>
+        <div className="relative z-10 text-xs text-gray-500">
+          © {new Date().getFullYear()} CampusPass Platform. All rights reserved.
+        </div>
       </div>
 
-      {/* REGISTER FORM */}
+      {/* Register Form */}
+      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md space-y-8">
+          <div className="space-y-2 text-center lg:text-left">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Create Account
+            </h1>
+            <p className="text-sm text-gray-400">
+              Join thousands of students discovering events across campus.
+            </p>
+          </div>
 
-      <div
-        className="
-        flex
-        flex-1
-        items-center
-        justify-center
-        p-8
-        "
-      >
-        <div
-          className="
-          w-full
-          max-w-md
-          "
-        >
-          <h1
-            className="
-            text-3xl
-            font-bold
-            "
-          >
-            Create Account
-          </h1>
-
-          <p
-            className="
-            mt-2
-            text-gray-400
-            "
-          >
-            Register to continue with CampusPass
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            className="
-            mt-8
-            space-y-5
-            "
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <InputField
               label="Full Name"
               name="fullName"
               type="text"
-              placeholder="John Doe"
+              placeholder="Aman Singh"
               value={form.fullName}
               onChange={handleChange}
               icon={User}
@@ -287,7 +119,7 @@ const Register = () => {
               label="Email Address"
               name="email"
               type="email"
-              placeholder="example@gmail.com"
+              placeholder="aman@gmail.com"
               value={form.email}
               onChange={handleChange}
               icon={Mail}
@@ -308,7 +140,7 @@ const Register = () => {
                 label="Password"
                 name="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="********"
+                placeholder="••••••••"
                 value={form.password}
                 onChange={handleChange}
                 icon={Lock}
@@ -317,39 +149,26 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="
-                absolute
-                right-4
-                top-10
-                text-gray-400
-                "
+                className="absolute right-4 top-10 text-gray-400 hover:text-white transition"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
             <Button type="submit" loading={loading}>
-              Create Account
+              <span className="flex items-center justify-center gap-2">
+                <span>Create Student Account</span>
+                <ArrowRight size={16} />
+              </span>
             </Button>
           </form>
 
-          <p
-            className="
-            mt-8
-            text-gray-400
-            "
-          >
+          <div className="text-center text-sm text-gray-400">
             Already have an account?{" "}
-            <Link
-              to="/login"
-              className="
-              text-blue-500
-              font-semibold
-              "
-            >
+            <Link to="/login" className="font-bold text-blue-400 hover:underline">
               Sign In
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

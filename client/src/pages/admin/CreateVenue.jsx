@@ -31,37 +31,37 @@ const CreateVenue = () => {
 
 
 
-  const [loading,setLoading] =
-  useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
 
 
-  const [formData,setFormData] =
-  useState({
+  const [formData, setFormData] =
+    useState({
 
-    name:"",
-    address:"",
-    collegeName:"",
-    capacity:"",
-    facilities:"",
-    latitude:"",
-    longitude:"",
+      name: "",
+      address: "",
+      collegeName: "",
+      capacity: "",
+      facilities: "",
+      latitude: "",
+      longitude: "",
 
-  });
-
-
+    });
 
 
 
-  useEffect(()=>{
 
-    if(isEditMode){
+
+  useEffect(() => {
+
+    if (isEditMode) {
 
       fetchVenue();
 
     }
 
-  },[id]);
+  }, [id]);
 
 
 
@@ -69,60 +69,60 @@ const CreateVenue = () => {
 
 
 
-  const fetchVenue = async()=>{
+  const fetchVenue = async () => {
 
-    try{
+    try {
 
 
       const res =
-      await api.get(
-        `/venues/${id}`
-      );
+        await api.get(
+          `/venues/${id}`
+        );
 
 
       const venue =
-      res.data.data;
+        res.data.data;
 
 
 
       setFormData({
 
         name:
-        venue.name || "",
+          venue.name || "",
 
 
         address:
-        venue.address || "",
+          venue.address || "",
 
 
         collegeName:
-        venue.collegeName || "",
+          venue.collegeName || "",
 
 
         capacity:
-        venue.capacity || "",
+          venue.capacity || "",
 
 
         facilities:
-        venue.facilities
-        ?
-        venue.facilities.join(", ")
-        :
-        "",
+          venue.facilities
+            ?
+            venue.facilities.join(", ")
+            :
+            "",
 
 
         latitude:
-        venue.latitude || "",
+          venue.latitude || "",
 
 
         longitude:
-        venue.longitude || "",
+          venue.longitude || "",
 
       });
 
 
 
-    }catch(error){
+    } catch (error) {
 
 
       toast.error(
@@ -142,7 +142,7 @@ const CreateVenue = () => {
 
 
 
-  const handleChange=(e)=>{
+  const handleChange = (e) => {
 
 
     setFormData({
@@ -150,7 +150,7 @@ const CreateVenue = () => {
       ...formData,
 
       [e.target.name]:
-      e.target.value
+        e.target.value
 
     });
 
@@ -165,14 +165,14 @@ const CreateVenue = () => {
 
 
 
-  const handleSubmit=async(e)=>{
+  const handleSubmit = async (e) => {
 
 
     e.preventDefault();
 
 
 
-    try{
+    try {
 
 
       setLoading(true);
@@ -183,46 +183,46 @@ const CreateVenue = () => {
 
 
         name:
-        formData.name,
+          formData.name,
 
 
         address:
-        formData.address,
+          formData.address,
 
 
         collegeName:
-        formData.collegeName,
+          formData.collegeName,
 
 
         capacity:
-        Number(formData.capacity),
+          Number(formData.capacity),
 
 
 
         facilities:
-        formData.facilities
-        .split(",")
-        .map(item=>item.trim())
-        .filter(Boolean),
+          formData.facilities
+            .split(",")
+            .map(item => item.trim())
+            .filter(Boolean),
 
 
 
 
         latitude:
-        formData.latitude
-        ?
-        Number(formData.latitude)
-        :
-        undefined,
+          formData.latitude
+            ?
+            Number(formData.latitude)
+            :
+            undefined,
 
 
 
         longitude:
-        formData.longitude
-        ?
-        Number(formData.longitude)
-        :
-        undefined,
+          formData.longitude
+            ?
+            Number(formData.longitude)
+            :
+            undefined,
 
 
       };
@@ -233,7 +233,7 @@ const CreateVenue = () => {
 
 
 
-      if(isEditMode){
+      if (isEditMode) {
 
 
         await api.put(
@@ -251,7 +251,7 @@ const CreateVenue = () => {
 
 
       }
-      else{
+      else {
 
 
         await api.post(
@@ -282,7 +282,7 @@ const CreateVenue = () => {
 
 
 
-    }catch(error){
+    } catch (error) {
 
 
       toast.error(
@@ -294,7 +294,7 @@ const CreateVenue = () => {
 
 
     }
-    finally{
+    finally {
 
 
       setLoading(false);
@@ -331,7 +331,7 @@ const CreateVenue = () => {
 
       <button
 
-        onClick={()=>
+        onClick={() =>
           navigate(-1)
         }
 
@@ -352,7 +352,7 @@ const CreateVenue = () => {
 
       >
 
-        <ArrowLeft size={17}/>
+        <ArrowLeft size={17} />
 
         Back
 
@@ -403,10 +403,10 @@ const CreateVenue = () => {
 
             {
               isEditMode
-              ?
-              "Edit Venue"
-              :
-              "Create Venue"
+                ?
+                "Edit Venue"
+                :
+                "Create Venue"
             }
 
           </h1>
@@ -423,10 +423,10 @@ const CreateVenue = () => {
 
             {
               isEditMode
-              ?
-              "Update venue details"
-              :
-              "Add a new event location"
+                ?
+                "Update venue details"
+                :
+                "Add a new event location"
             }
 
           </p>
@@ -719,20 +719,20 @@ const CreateVenue = () => {
         >
 
 
-          <Plus size={18}/>
+          <Plus size={18} />
 
 
 
           {
             loading
-            ?
-            "Saving..."
-            :
-            isEditMode
-            ?
-            "Update Venue"
-            :
-            "Create Venue"
+              ?
+              "Saving..."
+              :
+              isEditMode
+                ?
+                "Update Venue"
+                :
+                "Create Venue"
           }
 
 
@@ -763,69 +763,69 @@ const CreateVenue = () => {
 
 
 const Input = ({
-  icon:Icon,
+  icon: Icon,
   label,
   ...props
-})=>{
+}) => {
 
 
-return (
+  return (
 
-<div>
+    <div>
 
 
-<label
+      <label
 
-className="
+        className="
 mb-2
 block
 text-sm
 text-gray-400
 "
 
->
+      >
 
-{label}
+        {label}
 
-</label>
-
-
+      </label>
 
 
-<div
-className="
+
+
+      <div
+        className="
 relative
 "
->
+      >
 
 
-{
-Icon &&
+        {
+          Icon &&
 
-<Icon
+          <Icon
 
-size={18}
+            size={18}
 
-className="
+            className="
 absolute
 left-3
 top-3.5
 text-gray-500
 "
 
-/>
+          />
 
-}
-
-
+        }
 
 
 
-<input
 
-{...props}
 
-className="
+        <input
+
+          {...props}
+
+          className="
 w-full
 rounded-xl
 border
@@ -840,16 +840,16 @@ placeholder:text-gray-500
 focus:border-blue-500
 "
 
-/>
+        />
 
 
 
-</div>
+      </div>
 
 
-</div>
+    </div>
 
-);
+  );
 
 
 };

@@ -1,4 +1,5 @@
 const Event = require("../models/Event");
+const User = require("../models/User");
 const Category = require("../models/Category");
 const Venue = require("../models/Venue");
 
@@ -6,7 +7,7 @@ const apiResponse = require("../utils/apiResponse");
 const ApiError = require("../utils/ApiError");
 
 const createNotification =
-require("../utils/createNotification");
+  require("../utils/createNotification");
 
 const {
   uploadToCloudinary,
@@ -16,9 +17,7 @@ const {
 // Create Event
 
 const createEvent = async (req, res, next) => {
-
   try {
-
     const {
       title,
       description,
@@ -28,36 +27,218 @@ const createEvent = async (req, res, next) => {
       endDate,
       registrationDeadline,
       capacity,
+      price,
     } = req.body;
 
+    // Validate required fields
+    if (!title || !description || !category || !venue || !startDate || !endDate || !capacity === undefined) {
+      throw new ApiError(400, "Missing required fields: title, description, category, venue, startDate, endDate, and capacity are required");
+    }
 
-
-    const categoryExists =
-      await Category.findById(category);
-
-
+    /*
+    --------------------------------
+    Check Category Exists
+    --------------------------------
+    */
+    const categoryExists = await Category.findById(category);
     if (!categoryExists) {
-
-      throw new ApiError(
-        404,
-        "Category not found"
-      );
-
+      throw new ApiError(404, "Category not found");
     }
 
-
-
-
-    const venueExists =
-      await Venue.findById(venue);
-
-
-
+    /*
+    --------------------------------
+    Check Venue Exists
+    --------------------------------
+    */
+    const venueExists = await Venue.findById(venue);
     if (!venueExists) {
+      throw new ApiError(404, "Venue not found");
+    }
+
+    /*
+    --------------------------------
+    Check Venue Availability
+    --------------------------------
+    */
+    const existingEvents = await Event.find({
+      venue: venue,
+      status: { $in: ['approved', 'pending'] },
+      $or: [
+        { startDate: { $lt: endDate, $gte: startDate } },
+        { endDate: { $gt: startDate, $lte: endDate } },
+        { startDate: { $lte: startDate }, endDate: { $gte: endDate } }
+      ]
+    });
+
+    if (existingEvents.length > 0) {
+      throw new ApiError(400, "Venue is already booked for the selected time slot");
+    }
+
+    /*
+    --------------------------------
+    Validate Dates
+    --------------------------------
+    */
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const deadline = registrationDeadline ? new Date(registrationDeadline) : null;
+
+    if (start >= end) {
+      throw new ApiError(400, "End date must be after start date");
+    }
+
+    if (deadline && deadline >= start) {
+      throw new ApiError(400, "Registration deadline must be before start date");
+    }
+
+    if (deadline && deadline < new Date()) {
+      throw new ApiError(400, "Registration deadline cannot be in the past");
+    }
+
+    /*
+    --------------------------------
+    Check Venue Capacity
+    --------------------------------
+    */
+    const eventCapacity = Number(capacity);
+    if (isNaN(eventCapacity) || eventCapacity <= 0) {
+      throw new ApiError(400, "Capacity must be a positive number");
+    }
+
+    if (eventCapacity > venueExists.capacity) {
+      throw new ApiError(400, `Event capacity (${eventCapacity}) exceeds venue capacity (${venueExists.capacity})`);
+    }
+
+    /*
+    --------------------------------
+    Validate Price
+    --------------------------------
+    */
+    const eventPrice = Number(price) || 0;
+    if (eventPrice < 0) {
+      throw new ApiError(400, "Price cannot be negative");
+    }
+
+    /*
+    --------------------------------
+    Upload Poster
+    --------------------------------
+    */
+    let poster = "";
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file, "campuspass/events");
+        poster = result.secure_url;
+      } catch (uploadError) {
+        throw new ApiError(500, "Failed to upload poster image");
+      }
+    }
+
+    /*
+    --------------------------------
+    Create Event
+    --------------------------------
+    */
+    const event = await Event.create({
+      title: title.trim(),
+      description: description.trim(),
+      poster,
+      category,
+      organizer: req.user.id,
+      venue,
+      startDate: start,
+      endDate: end,
+      registrationDeadline: deadline,
+      capacity: eventCapacity,
+      price: eventPrice,
+      location: {
+        name: venueExists.name,
+        address: venueExists.address
+      },
+      status: "pending"
+    });
+
+    /*
+    --------------------------------
+    Notification To Organizer
+    --------------------------------
+    */
+    await createNotification({
+      userId: req.user.id,
+      title: "Event Submitted",
+      message: `${title} has been submitted for approval.`,
+      type: "event",
+      data: {
+        eventId: event._id
+      }
+    });
+
+    /*
+    --------------------------------
+    Notification To Admins
+    --------------------------------
+    */
+    const admins = await User.find({
+      role: "admin",
+      status: "active"
+    }).select("_id");
+
+    if (admins.length > 0) {
+      const adminNotifications = admins.map((admin) => ({
+        userId: admin._id,
+        title: "New Event Approval Request",
+        message: `${title} requires your approval.`,
+        type: "event",
+        data: {
+          eventId: event._id,
+          organizerId: req.user.id,
+          eventTitle: title
+        }
+      }));
+
+      await Notification.insertMany(adminNotifications);
+    }
+
+    /*
+    --------------------------------
+    Response
+    --------------------------------
+    */
+    res.status(201).json(
+      apiResponse(201, "Event created successfully", event)
+    );
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
+
+
+// Update Event
+
+
+const updateEvent = async (req, res, next) => {
+
+  try {
+
+
+    const event =
+      await Event.findById(
+        req.params.id
+      );
+
+
+
+    if (!event) {
 
       throw new ApiError(
         404,
-        "Venue not found"
+        "Event not found"
       );
 
     }
@@ -65,13 +246,16 @@ const createEvent = async (req, res, next) => {
 
 
 
-    // Check venue capacity
-
-    if (capacity > venueExists.capacity) {
+    if (
+      event.organizer.toString()
+      !== req.user.id
+      &&
+      req.user.role !== "admin"
+    ) {
 
       throw new ApiError(
-        400,
-        "Event capacity exceeds venue capacity"
+        403,
+        "Unauthorized"
       );
 
     }
@@ -80,7 +264,11 @@ const createEvent = async (req, res, next) => {
 
 
 
-    let poster = "";
+    Object.assign(
+      event,
+      req.body
+    );
+
 
 
 
@@ -93,7 +281,7 @@ const createEvent = async (req, res, next) => {
         );
 
 
-      poster =
+      event.poster =
         result.secure_url;
 
     }
@@ -101,78 +289,23 @@ const createEvent = async (req, res, next) => {
 
 
 
-    const event =
-      await Event.create({
-
-        title,
-
-        description,
-
-        poster,
-
-        category,
-
-        organizer:req.user.id,
-
-        venue,
-
-        startDate,
-
-        endDate,
-
-        registrationDeadline,
-
-        capacity,
-
-        location:{
-          name:venueExists.name,
-          address:venueExists.address
-        },
-
-        status:"pending"
-
-      });
-
-
-
-
-
-    // Notification
-
-    await createNotification({
-
-      userId:req.user.id,
-
-      title:"Event Submitted",
-
-      message:
-      `${title} has been submitted for approval.`,
-
-      type:"event",
-
-      data:{
-        eventId:event._id
-      }
-
-    });
-
-
+    await event.save();
 
 
 
     res
-    .status(201)
-    .json(
-      apiResponse(
-        201,
-        "Event created successfully",
-        event
-      )
-    );
+      .status(200)
+      .json(
+        apiResponse(
+          200,
+          "Event updated successfully",
+          event
+        )
+      );
 
 
 
-  } catch(error){
+  } catch (error) {
 
     next(error);
 
@@ -186,172 +319,72 @@ const createEvent = async (req, res, next) => {
 
 
 
-// Update Event
-
-
-const updateEvent = async(req,res,next)=>{
-
-try{
-
-
-const event =
-await Event.findById(
-req.params.id
-);
-
-
-
-if(!event){
-
-throw new ApiError(
-404,
-"Event not found"
-);
-
-}
-
-
-
-
-if(
-event.organizer.toString()
-!== req.user.id
-&&
-req.user.role !== "admin"
-){
-
-throw new ApiError(
-403,
-"Unauthorized"
-);
-
-}
-
-
-
-
-
-Object.assign(
-event,
-req.body
-);
-
-
-
-
-if(req.file){
-
-const result =
-await uploadToCloudinary(
-req.file,
-"campuspass/events"
-);
-
-
-event.poster =
-result.secure_url;
-
-}
-
-
-
-
-await event.save();
-
-
-
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event updated successfully",
-event
-)
-);
-
-
-
-}catch(error){
-
-next(error);
-
-}
-
-};
-
-
-
-
-
-
-
 
 // Delete Event
 
 
-const deleteEvent = async(req,res,next)=>{
+const deleteEvent = async (req, res, next) => {
 
-try{
-
-
-const event =
-await Event.findById(
-req.params.id
-);
+  try {
 
 
-
-if(!event){
-
-throw new ApiError(
-404,
-"Event not found"
-);
-
-}
+    const event =
+      await Event.findById(
+        req.params.id
+      );
 
 
 
-if(
-event.organizer.toString()
-!== req.user.id
-&&
-req.user.role !== "admin"
-){
+    if (!event) {
 
-throw new ApiError(
-403,
-"Unauthorized"
-);
+      throw new ApiError(
+        404,
+        "Event not found"
+      );
 
-}
+    }
 
 
 
+    if (
+      event.organizer.toString()
+      !== req.user.id
+      &&
+      req.user.role !== "admin"
+    ) {
 
-await Event.findByIdAndDelete(
-req.params.id
-);
+      throw new ApiError(
+        403,
+        "Unauthorized"
+      );
 
-
-
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event deleted successfully"
-)
-);
+    }
 
 
 
-}catch(error){
 
-next(error);
+    await Event.findByIdAndDelete(
+      req.params.id
+    );
 
-}
+
+
+    res
+      .status(200)
+      .json(
+        apiResponse(
+          200,
+          "Event deleted successfully"
+        )
+      );
+
+
+
+  } catch (error) {
+
+    next(error);
+
+  }
 
 };
 
@@ -366,50 +399,50 @@ next(error);
 // Public Events
 
 
-const getAllEvents = async(req,res,next)=>{
+const getAllEvents = async (req, res, next) => {
 
-try{
-
-
-const events =
-await Event.find({
-
-status:"approved"
-
-})
-.populate(
-"category"
-)
-.populate(
-"venue"
-)
-.populate(
-"organizer",
-"fullName email"
-)
-.sort({
-createdAt:-1
-});
+  try {
 
 
+    const events =
+      await Event.find({
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Events fetched successfully",
-events
-)
-);
+        status: "approved"
+
+      })
+        .populate(
+          "category"
+        )
+        .populate(
+          "venue"
+        )
+        .populate(
+          "organizer",
+          "fullName email"
+        )
+        .sort({
+          createdAt: -1
+        });
 
 
 
-}catch(error){
+    res
+      .status(200)
+      .json(
+        apiResponse(
+          200,
+          "Events fetched successfully",
+          events
+        )
+      );
 
-next(error);
 
-}
+
+  } catch (error) {
+
+    next(error);
+
+  }
 
 };
 
@@ -425,54 +458,54 @@ next(error);
 
 
 const getEventById =
-async(req,res,next)=>{
+  async (req, res, next) => {
 
-try{
-
-
-const event =
-await Event.findById(
-req.params.id
-)
-.populate("category")
-.populate("venue")
-.populate(
-"organizer",
-"fullName email"
-);
+    try {
 
 
-
-if(!event){
-
-throw new ApiError(
-404,
-"Event not found"
-);
-
-}
+      const event =
+        await Event.findById(
+          req.params.id
+        )
+          .populate("category")
+          .populate("venue")
+          .populate(
+            "organizer",
+            "fullName email"
+          );
 
 
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event fetched successfully",
-event
-)
-);
+      if (!event) {
+
+        throw new ApiError(
+          404,
+          "Event not found"
+        );
+
+      }
 
 
 
-}catch(error){
+      res
+        .status(200)
+        .json(
+          apiResponse(
+            200,
+            "Event fetched successfully",
+            event
+          )
+        );
 
-next(error);
 
-}
 
-};
+    } catch (error) {
+
+      next(error);
+
+    }
+
+  };
 
 
 
@@ -486,42 +519,42 @@ next(error);
 
 
 const getMyEvents =
-async(req,res,next)=>{
+  async (req, res, next) => {
 
-try{
-
-
-const events =
-await Event.find({
-
-organizer:req.user.id
-
-})
-.sort({
-createdAt:-1
-});
+    try {
 
 
+      const events =
+        await Event.find({
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"My events fetched successfully",
-events
-)
-);
+          organizer: req.user.id
+
+        })
+          .sort({
+            createdAt: -1
+          });
 
 
 
-}catch(error){
+      res
+        .status(200)
+        .json(
+          apiResponse(
+            200,
+            "My events fetched successfully",
+            events
+          )
+        );
 
-next(error);
 
-}
 
-};
+    } catch (error) {
+
+      next(error);
+
+    }
+
+  };
 
 
 
@@ -535,80 +568,80 @@ next(error);
 
 
 const approveEvent =
-async(req,res,next)=>{
+  async (req, res, next) => {
 
-try{
-
-
-const event =
-await Event.findByIdAndUpdate(
-
-req.params.id,
-
-{
-status:"approved"
-},
-
-{
-new:true
-}
-
-);
+    try {
 
 
+      const event =
+        await Event.findByIdAndUpdate(
 
-if(!event){
+          req.params.id,
 
-throw new ApiError(
-404,
-"Event not found"
-);
+          {
+            status: "approved"
+          },
 
-}
+          {
+            new: true
+          }
+
+        );
 
 
 
+      if (!event) {
 
+        throw new ApiError(
+          404,
+          "Event not found"
+        );
 
-await createNotification({
-
-userId:event.organizer,
-
-title:"Event Approved",
-
-message:
-`${event.title} has been approved.`,
-
-type:"event",
-
-data:{
-eventId:event._id
-}
-
-});
+      }
 
 
 
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event approved successfully",
-event
-)
-);
+
+      await createNotification({
+
+        userId: event.organizer,
+
+        title: "Event Approved",
+
+        message:
+          `${event.title} has been approved.`,
+
+        type: "event",
+
+        data: {
+          eventId: event._id
+        }
+
+      });
 
 
 
-}catch(error){
 
-next(error);
+      res
+        .status(200)
+        .json(
+          apiResponse(
+            200,
+            "Event approved successfully",
+            event
+          )
+        );
 
-}
 
-};
+
+    } catch (error) {
+
+      next(error);
+
+    }
+
+  };
 
 
 
@@ -622,88 +655,88 @@ next(error);
 
 
 const rejectEvent =
-async(req,res,next)=>{
+  async (req, res, next) => {
 
-try{
-
-
-const {
-reason
-}=req.body;
+    try {
 
 
-
-const event =
-await Event.findByIdAndUpdate(
-
-req.params.id,
-
-{
-status:"rejected",
-rejectionReason:reason
-},
-
-{
-new:true
-}
-
-);
+      const {
+        reason
+      } = req.body;
 
 
 
-if(!event){
+      const event =
+        await Event.findByIdAndUpdate(
 
-throw new ApiError(
-404,
-"Event not found"
-);
+          req.params.id,
 
-}
+          {
+            status: "rejected",
+            rejectionReason: reason
+          },
+
+          {
+            new: true
+          }
+
+        );
 
 
 
+      if (!event) {
 
+        throw new ApiError(
+          404,
+          "Event not found"
+        );
 
-await createNotification({
-
-userId:event.organizer,
-
-title:"Event Rejected",
-
-message:
-`${event.title} was rejected.`,
-
-type:"event",
-
-data:{
-eventId:event._id
-}
-
-});
+      }
 
 
 
 
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event rejected",
-event
-)
-);
+      await createNotification({
+
+        userId: event.organizer,
+
+        title: "Event Rejected",
+
+        message:
+          `${event.title} was rejected.`,
+
+        type: "event",
+
+        data: {
+          eventId: event._id
+        }
+
+      });
 
 
 
-}catch(error){
 
-next(error);
 
-}
+      res
+        .status(200)
+        .json(
+          apiResponse(
+            200,
+            "Event rejected",
+            event
+          )
+        );
 
-};
+
+
+    } catch (error) {
+
+      next(error);
+
+    }
+
+  };
 
 
 
@@ -717,103 +750,130 @@ next(error);
 
 
 const cancelEvent =
-async(req,res,next)=>{
+  async (req, res, next) => {
 
-try{
-
-
-const event =
-await Event.findById(
-req.params.id
-);
+    try {
 
 
-
-if(!event){
-
-throw new ApiError(
-404,
-"Event not found"
-);
-
-}
+      const event =
+        await Event.findById(
+          req.params.id
+        );
 
 
 
+      if (!event) {
 
-event.status="cancelled";
+        throw new ApiError(
+          404,
+          "Event not found"
+        );
 
-
-await event.save();
+      }
 
 
 
 
+      event.status = "cancelled";
 
-await createNotification({
 
-userId:event.organizer,
-
-title:"Event Cancelled",
-
-message:
-`${event.title} has been cancelled.`,
-
-type:"event",
-
-data:{
-eventId:event._id
-}
-
-});
+      await event.save();
 
 
 
 
 
-res
-.status(200)
-.json(
-apiResponse(
-200,
-"Event cancelled",
-event
-)
-);
+      await createNotification({
+
+        userId: event.organizer,
+
+        title: "Event Cancelled",
+
+        message:
+          `${event.title} has been cancelled.`,
+
+        type: "event",
+
+        data: {
+          eventId: event._id
+        }
+
+      });
 
 
 
-}catch(error){
 
-next(error);
 
-}
+      res
+        .status(200)
+        .json(
+          apiResponse(
+            200,
+            "Event cancelled",
+            event
+          )
+        );
+
+
+
+    } catch (error) {
+
+      next(error);
+
+    }
+
+  };
+
+
+
+
+
+
+// Get ALL events including unapproved (admin only)
+const getAdminEvents = async (req, res, next) => {
+
+  try {
+
+    const events = await Event.find()
+      .populate("category")
+      .populate("venue")
+      .populate("organizer", "fullName email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(
+      apiResponse(200, "All events fetched successfully", events)
+    );
+
+  } catch (error) {
+
+    next(error);
+
+  }
 
 };
 
 
 
-
-
-
 module.exports = {
 
-createEvent,
+  createEvent,
 
-updateEvent,
+  updateEvent,
 
-deleteEvent,
+  deleteEvent,
 
-getAllEvents,
+  getAllEvents,
 
-getEventById,
+  getEventById,
 
-getMyEvents,
+  getMyEvents,
 
-approveEvent,
+  approveEvent,
 
-rejectEvent,
+  rejectEvent,
 
-cancelEvent
+  cancelEvent,
+
+  getAdminEvents
 
 };
