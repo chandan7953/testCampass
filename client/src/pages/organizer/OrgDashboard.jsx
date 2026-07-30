@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, PlusCircle, Users, IndianRupee, Ticket, ArrowRight, ScanLine } from "lucide-react";
+import { ClipboardList, PlusCircle, Users, IndianRupee, Ticket, ArrowRight, ScanLine, CloudCog } from "lucide-react";
 import api from "../../api/axios";
 
 import PageHeader from "../../components/PageHeader";
@@ -27,25 +27,12 @@ const OrgDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/events/my-events");
-      const myEvents = res.data.data || [];
-      setEvents(myEvents);
-
-      let totalBookings = 0;
-      let totalRevenue = 0;
-
-      myEvents.forEach((evt) => {
-        const booked = Number(evt.bookedSeats) || 0;
-        const price = Number(evt.price) || 0;
-        totalBookings += booked;
-        totalRevenue += booked * price;
-      });
-
-      setStats({
-        totalEvents: myEvents.length,
-        totalBookings,
-        totalRevenue,
-      });
+      const [statsRes, eventsRes] = await Promise.all([
+        api.get("/organizer/dashboard"),
+        api.get("/events/organizer/my-events")
+      ]);
+      setStats(statsRes.data.data);
+      setEvents(eventsRes.data.data || []);
     } catch (error) {
       console.error("Error fetching organizer dashboard:", error);
     } finally {

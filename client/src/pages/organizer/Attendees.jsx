@@ -36,7 +36,7 @@ const Attendees = () => {
 
   const fetchEvents = async () => {
     try {
-      const res = await api.get("/events/my-events");
+      const res = await api.get("/events/organizer/my-events");
       const list = res.data.data || [];
       setEvents(list);
       if (!selectedEventId && list.length > 0) {
@@ -50,7 +50,7 @@ const Attendees = () => {
   const fetchAttendees = async (eId) => {
     try {
       setLoading(true);
-      const res = await api.get(`/bookings/event/${eId}`);
+      const res = await api.get(`/organizer/attendees/${eId}`);
       setAttendees(res.data.data || []);
     } catch (error) {
       // Fallback empty list
@@ -162,7 +162,6 @@ const Attendees = () => {
               <tr>
                 <th className="px-6 py-4">Pass Code</th>
                 <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Contact</th>
                 <th className="px-6 py-4">Seats</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Check-In Action</th>
@@ -179,12 +178,6 @@ const Attendees = () => {
                     <td className="px-6 py-4">
                       <p className="font-bold text-white text-sm">{user.fullName || "Student Name"}</p>
                       <p className="text-[11px] text-gray-400">{user.email || "student@college.edu"}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="flex items-center gap-1.5 text-gray-300">
-                        <Phone size={12} className="text-gray-400" />
-                        <span>{user.mobile || "N/A"}</span>
-                      </p>
                     </td>
                     <td className="px-6 py-4 font-bold text-white">
                       {item.seatsCount || 1} Seat(s)

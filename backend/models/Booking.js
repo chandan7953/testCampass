@@ -49,6 +49,15 @@ const bookingSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "expired"],
       default: "pending",
     },
+
+    checkedIn: {
+      type: Boolean,
+      default: false,
+    },
+
+    scannedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

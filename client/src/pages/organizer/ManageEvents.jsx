@@ -26,7 +26,6 @@ const ManageEvents = () => {
     try {
       setLoading(true);
       const res = await api.get("/events/organizer/my-events");
-      console.log(res.data);
       setEvents(res.data.data || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load events");

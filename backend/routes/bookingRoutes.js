@@ -10,6 +10,7 @@ const {
   getMyBookings,
   downloadTicket,
   getQRCode,
+  toggleCheckIn,
 } = require("../controllers/bookingController");
 
 const verifyToken = require("../middlewares/verifyToken");
@@ -35,6 +36,13 @@ router.patch(
   verifyToken,
   authorizeRole("organizer", "admin"),
   confirmBooking,
+);
+
+router.patch(
+  "/:id/check-in",
+  verifyToken,
+  authorizeRole("organizer", "admin"),
+  toggleCheckIn,
 );
 
 module.exports = router;

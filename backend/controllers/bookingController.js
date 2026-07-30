@@ -229,6 +229,30 @@ const getQRCode = async (req, res, next) => {
   }
 };
 
+const toggleCheckIn = async (req, res, next) => {
+  try {
+    const { checkedIn } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      throw new ApiError(404, "Booking not found");
+    }
+
+    booking.checkedIn = checkedIn;
+    if (checkedIn) {
+      booking.scannedAt = new Date();
+    } else {
+      booking.scannedAt = undefined;
+    }
+
+    await booking.save();
+
+    res.status(200).json(apiResponse(200, "Check-in status updated", booking));
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createBooking,
   confirmBooking,
@@ -237,4 +261,5 @@ module.exports = {
   getMyBookings,
   downloadTicket,
   getQRCode,
+  toggleCheckIn,
 };
