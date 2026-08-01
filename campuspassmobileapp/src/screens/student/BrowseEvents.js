@@ -9,9 +9,12 @@ import EventCard from '../../components/EventCard';
 import PageHeader from '../../components/PageHeader';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import EmptyState from '../../components/EmptyState';
+import { useTheme } from '../../utils/ThemeContext';
 
 const BrowseEvents = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
@@ -71,7 +74,6 @@ const BrowseEvents = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
             <PageHeader
@@ -85,13 +87,13 @@ const BrowseEvents = () => {
               onPress={() => setViewMode("grid")}
               style={[styles.toggleBtn, viewMode === "grid" && styles.toggleBtnActive]}
             >
-              <Grid size={16} color={viewMode === "grid" ? "#ffffff" : "#9ca3af"} />
+              <Grid size={16} color={viewMode === "grid" ? theme.colors.surface : theme.colors.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setViewMode("list")}
               style={[styles.toggleBtn, viewMode === "list" && styles.toggleBtnActive]}
             >
-              <List size={16} color={viewMode === "list" ? "#ffffff" : "#9ca3af"} />
+              <List size={16} color={viewMode === "list" ? theme.colors.surface : theme.colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -126,7 +128,7 @@ const BrowseEvents = () => {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
         ) : filteredEvents.length === 0 ? (
           <View style={{ marginTop: 24 }}>
             <EmptyState
@@ -163,76 +165,77 @@ const BrowseEvents = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  viewModeToggle: {
-    flexDirection: 'row',
-    backgroundColor: '#12121a',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 4,
-    marginTop: 8,
-  },
-  toggleBtn: {
-    padding: 8,
-    borderRadius: 12,
-  },
-  toggleBtnActive: {
-    backgroundColor: '#2563eb',
-  },
-  priceFilterContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-  },
-  priceChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  priceChipActive: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderColor: 'rgba(59, 130, 246, 0.5)',
-  },
-  priceText: {
-    color: '#9ca3af',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  priceTextActive: {
-    color: '#60a5fa',
-  },
-  eventsGrid: {
-    gap: 16,
-  },
-  clearBtn: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
-    marginTop: 16,
-  },
-  clearBtnText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  }
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    viewModeToggle: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      padding: 4,
+      marginTop: 8,
+    },
+    toggleBtn: {
+      padding: 8,
+      borderRadius: 12,
+    },
+    toggleBtnActive: {
+      backgroundColor: theme.colors.primary,
+    },
+    priceFilterContainer: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 20,
+    },
+    priceChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    priceChipActive: {
+      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+      borderColor: theme.colors.primary,
+    },
+    priceText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    priceTextActive: {
+      color: theme.colors.primary,
+    },
+    eventsGrid: {
+      gap: 16,
+    },
+    clearBtn: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 16,
+      marginTop: 16,
+    },
+    clearBtnText: {
+      color: theme.colors.surface,
+      fontWeight: 'bold',
+    },
+  });
 
 export default BrowseEvents;

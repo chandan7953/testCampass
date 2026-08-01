@@ -36,7 +36,9 @@ export const formatCurrency = (amount) => {
 export const getInitials = (name) => {
   if (!name) return "CP";
   return name
+    .trim()
     .split(" ")
+    .filter(Boolean)
     .map((word) => word[0])
     .join("")
     .substring(0, 2)
@@ -45,7 +47,7 @@ export const getInitials = (name) => {
 
 // Converted to return React Native style objects instead of Tailwind strings
 export const getStatusStyle = (status) => {
-  const normalized = (status || "").toLowerCase();
+  const normalized = (status || "").toLowerCase().trim();
   
   const baseStyle = { borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 16 };
 
@@ -54,6 +56,7 @@ export const getStatusStyle = (status) => {
     case "active":
     case "confirmed":
     case "approved":
+    case "paid":
       return { 
         container: { ...baseStyle, backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' },
         text: { color: '#34d399' }
@@ -67,6 +70,7 @@ export const getStatusStyle = (status) => {
     case "cancelled":
     case "rejected":
     case "blocked":
+    case "failed":
       return { 
         container: { ...baseStyle, backgroundColor: 'rgba(244, 63, 94, 0.1)', borderColor: 'rgba(244, 63, 94, 0.2)' },
         text: { color: '#fb7185' }
@@ -75,6 +79,12 @@ export const getStatusStyle = (status) => {
       return { 
         container: { ...baseStyle, backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.2)' },
         text: { color: '#60a5fa' }
+      };
+    case "sold_out":
+    case "expired":
+      return { 
+        container: { ...baseStyle, backgroundColor: 'rgba(249, 115, 22, 0.1)', borderColor: 'rgba(249, 115, 22, 0.2)' },
+        text: { color: '#fb923c' }
       };
     default:
       return { 

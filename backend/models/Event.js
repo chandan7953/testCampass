@@ -46,6 +46,16 @@ const eventSchema = new mongoose.Schema(
       required: true,
     },
 
+    startTime: {
+      type: String,
+      default: "",
+    },
+
+    endTime: {
+      type: String,
+      default: "",
+    },
+
     registrationDeadline: Date,
 
     capacity: {
@@ -100,5 +110,11 @@ const eventSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Performance indexes
+eventSchema.index({ venue: 1, startDate: 1, endDate: 1 });
+eventSchema.index({ status: 1 });
+eventSchema.index({ organizer: 1 });
+eventSchema.index({ startDate: -1 });
 
 module.exports = mongoose.model("Event", eventSchema);

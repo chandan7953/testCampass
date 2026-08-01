@@ -14,8 +14,7 @@ const ApiError = require("../utils/ApiError");
 
 const registerUser = async (req, res, next) => {
   try {
-    const { fullName, email, mobile, password } = req.body;
-    const role = "student";
+    const { fullName, email, mobile, password, role } = req.body;
     const existingUser = await User.findOne({
       $or: [{ email }, { mobile }],
     });

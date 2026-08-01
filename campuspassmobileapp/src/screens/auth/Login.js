@@ -7,10 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import api from '../../api/axios';
 import { loginSuccess } from '../../redux/authSlice';
+import { useTheme } from '../../utils/ThemeContext';
+import Logo from '../../components/Logo';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,11 +43,6 @@ const Login = () => {
 
       await AsyncStorage.setItem("token", token);
       dispatch(loginSuccess({ token, user }));
-
-      // Alert.alert("Success", `Welcome back, ${user.fullName}!`);
-
-      // The Root Navigator will automatically redirect the user based on their role
-      // because we updated the Redux state with dispatch(loginSuccess(...))
     } catch (error) {
       Alert.alert("Login Failed", error.response?.data?.message || "Check your credentials.");
     } finally {
@@ -58,6 +57,7 @@ const Login = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.headerContainer}>
+          <Logo />
           <Text style={styles.headerTitle}>Welcome Back</Text>
           <Text style={styles.headerSubtitle}>Sign in to manage your bookings and explore campus events.</Text>
         </View>
@@ -66,11 +66,11 @@ const Login = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email Address</Text>
             <View style={styles.inputWrapper}>
-              <Mail size={18} color="#9ca3af" style={styles.inputIcon} />
+              <Mail size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="student@college.edu"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={theme.colors.textMuted}
                 value={form.email}
                 onChangeText={(val) => handleChange('email', val)}
                 keyboardType="email-address"
@@ -82,17 +82,17 @@ const Login = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Lock size={18} color="#9ca3af" style={styles.inputIcon} />
+              <Lock size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={theme.colors.textMuted}
                 value={form.password}
                 onChangeText={(val) => handleChange('password', val)}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                {showPassword ? <EyeOff size={18} color="#9ca3af" /> : <Eye size={18} color="#9ca3af" />}
+                {showPassword ? <EyeOff size={18} color={theme.colors.textMuted} /> : <Eye size={18} color={theme.colors.textMuted} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -107,11 +107,11 @@ const Login = () => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color={theme.colors.surface} size="small" />
             ) : (
               <View style={styles.submitBtnContent}>
                 <Text style={styles.submitBtnText}>Sign In to Account</Text>
-                <ArrowRight size={16} color="#ffffff" />
+                <ArrowRight size={16} color={theme.colors.surface} />
               </View>
             )}
           </TouchableOpacity>
@@ -128,106 +128,108 @@ const Login = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  headerContainer: {
-    marginBottom: 40,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    lineHeight: 20,
-  },
-  formContainer: {
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#d1d5db',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 14,
-  },
-  eyeBtn: {
-    padding: 8,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: -8,
-  },
-  forgotBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#60a5fa',
-  },
-  submitBtn: {
-    backgroundColor: '#2563eb',
-    borderRadius: 16,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  submitBtnDisabled: {
-    opacity: 0.7,
-  },
-  submitBtnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  submitBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    color: '#9ca3af',
-    fontSize: 14,
-  },
-  footerLink: {
-    color: '#60a5fa',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContainer: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: 24,
+    },
+    headerContainer: {
+      marginBottom: 36,
+      gap: 10,
+    },
+    headerTitle: {
+      fontSize: 30,
+      fontWeight: '900',
+      color: theme.colors.text,
+      marginTop: 8,
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: theme.colors.textMuted,
+      lineHeight: 20,
+    },
+    formContainer: {
+      gap: 20,
+    },
+    inputGroup: {
+      gap: 8,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      height: 56,
+    },
+    inputIcon: {
+      marginRight: 12,
+    },
+    input: {
+      flex: 1,
+      color: theme.colors.text,
+      fontSize: 14,
+    },
+    eyeBtn: {
+      padding: 8,
+    },
+    forgotBtn: {
+      alignSelf: 'flex-end',
+      marginTop: -4,
+    },
+    forgotBtnText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.colors.primary,
+    },
+    submitBtn: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: 16,
+      height: 56,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 8,
+    },
+    submitBtnDisabled: {
+      opacity: 0.6,
+    },
+    submitBtnContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    submitBtnText: {
+      color: theme.colors.surface,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    footerContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 32,
+    },
+    footerText: {
+      color: theme.colors.textMuted,
+      fontSize: 14,
+    },
+    footerLink: {
+      color: theme.colors.primary,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
 
 export default Login;

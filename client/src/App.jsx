@@ -6,6 +6,8 @@ import { Toaster } from "react-hot-toast";
 import api from "./api/axios";
 import { loginSuccess, logout } from "./redux/authSlice";
 import AppRoutes from "./routes/appRoutes";
+import { ThemeProvider } from "./utils/ThemeContext";
+import { SocketProvider } from "./context/SocketContext";
 
 function App() {
   const dispatch = useDispatch();
@@ -41,29 +43,33 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0F] text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-text">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-          <span className="font-semibold text-gray-300">Loading CampusPass...</span>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <span className="font-semibold text-text-muted">Loading CampusPass...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: "#181824",
-            color: "#fff",
-            border: "1px solid rgba(255,255,255,0.1)",
-          },
-        }}
-      />
-      <AppRoutes />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "var(--color-surface-base)",
+              color: "var(--color-text-base)",
+              border: "1px solid var(--color-border-base)",
+            },
+          }}
+        />
+        <SocketProvider>
+          <AppRoutes />
+        </SocketProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

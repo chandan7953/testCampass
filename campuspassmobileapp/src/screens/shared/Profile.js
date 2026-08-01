@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch, Image } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { User, KeyRound, Save } from 'lucide-react-native';
+import { User, KeyRound, Save, Moon, Sun, CalendarDays, Ticket, ShieldCheck } from 'lucide-react-native';
+import { useTheme } from '../../utils/ThemeContext';
 import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
@@ -11,9 +12,13 @@ import { getInitials } from '../../utils/formatters';
 const Profile = () => {
   const dispatch = useDispatch();
   const { user, token } = useSelector((state) => state.auth);
+  const { theme, isDark, toggleTheme } = useTheme();
+  const styles = getStyles(theme);
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [stats, setStats] = useState({ eventsCount: 0, ticketsCount: 0 });
+  const [imgError, setImgError] = useState(false);
   
   const [profileForm, setProfileForm] = useState({
     fullName: user?.fullName || "",
@@ -24,6 +29,57 @@ const Profile = () => {
     currentPassword: "",
     newPassword: "",
   });
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        if (user?.role === "student") {
+          const res = await api.get("/users/bookings");
+          const bookings = res.data.data || [];
+          setStats({
+            eventsCount: new Set(bookings.map((b) => b.eventId?._id || b.eventId)).size,
+            ticketsCount: bookings.reduce((sum, b) => sum + (b.seatsCount || b.quantity || 1), 0),
+          });
+        } else if (user?.role === "organizer") {
+          const res = await api.get("/events/organizer/my-events");
+          const events = res.data.data || [];
+          setStats({
+            eventsCount: events.length,
+            ticketsCount: events.reduce((sum, e) => sum + (e.bookedSeats || 0), 0),
+          });
+        } else if (user?.role === "admin") {
+          const res = await api.get("/events/admin/all");
+          const events = res.data.data || [];
+          setStats({
+            eventsCount: events.length,
+            ticketsCount: events.reduce((sum, e) => sum + (e.bookedSeats || 0), 0),
+          });
+        }
+      } catch (err) {
+        console.log("Stats error:", err);
+      }
+    };
+
+    if (user) {
+      fetchUserStats();
+    }
+  }, [user]);
+
+  const getImageUrl = (imageData) => {
+    if (!imageData) return null;
+    if (typeof imageData === "string") {
+      if (imageData.startsWith("http://") || imageData.startsWith("https://") || imageData.startsWith("data:")) {
+        return imageData;
+      }
+      return `${api.defaults.baseURL}/${imageData.replace(/^\//, "")}`;
+    }
+    if (typeof imageData === "object") {
+      if (imageData.url) return getImageUrl(imageData.url);
+      if (imageData.secure_url) return imageData.secure_url;
+      if (imageData.path) return getImageUrl(imageData.path);
+    }
+    return null;
+  };
 
   const handleProfileSubmit = async () => {
     try {
@@ -58,6 +114,7 @@ const Profile = () => {
   };
 
   const initials = getInitials(user?.fullName);
+  const profileImageUrl = getImageUrl(user?.profileImage);
 
   return (
     <KeyboardAvoidingView 
@@ -71,9 +128,18 @@ const Profile = () => {
           subtitle="Manage your profile information, password, and system privileges."
         />
 
+        {/* Profile Overview Card */}
         <View style={styles.profileOverviewCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+            {profileImageUrl && !imgError ? (
+              <Image 
+                source={{ uri: profileImageUrl }} 
+                style={styles.avatarImage} 
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <Text style={styles.avatarText}>{initials}</Text>
+            )}
           </View>
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
@@ -82,14 +148,72 @@ const Profile = () => {
             </View>
             <Text style={styles.userEmail}>{user?.email}</Text>
             <Text style={styles.statusText}>
-              Account Status: <Text style={styles.statusActive}>Active & Verified</Text>
+              Account Status: <Text style={styles.statusActive}>{user?.status || "Active & Verified"}</Text>
             </Text>
           </View>
         </View>
 
+        {/* Account Activity Section */}
         <View style={styles.formCard}>
           <View style={styles.formHeader}>
-            <User size={18} color="#60a5fa" />
+            <CalendarDays size={18} color={theme.colors.primary} />
+            <Text style={styles.formTitle}>Account Activity</Text>
+          </View>
+
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <CalendarDays size={20} color={theme.colors.primary} />
+              <Text style={styles.statNumber}>{stats.eventsCount}</Text>
+              <Text style={styles.statLabel}>
+                {user?.role === "organizer"
+                  ? "Events Created"
+                  : user?.role === "admin"
+                  ? "Total Events"
+                  : "Events Joined"}
+              </Text>
+            </View>
+
+            <View style={styles.statBox}>
+              <Ticket size={20} color={theme.colors.primary} />
+              <Text style={styles.statNumber}>{stats.ticketsCount}</Text>
+              <Text style={styles.statLabel}>
+                {user?.role === "organizer"
+                  ? "Tickets Sold"
+                  : user?.role === "admin"
+                  ? "Total Bookings"
+                  : "Tickets Purchased"}
+              </Text>
+            </View>
+
+            <View style={styles.statBox}>
+              <ShieldCheck size={20} color={theme.colors.primary} />
+              <Text style={styles.statNumber}>{user?.status ? user.status : "Active"}</Text>
+              <Text style={styles.statLabel}>Account Status</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Appearance Settings */}
+        <View style={styles.formCard}>
+          <View style={styles.formHeader}>
+            {isDark ? <Moon size={18} color={theme.colors.primary} /> : <Sun size={18} color={theme.colors.primary} />}
+            <Text style={styles.formTitle}>Appearance</Text>
+          </View>
+          <View style={[styles.inputGroup, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+            <Text style={styles.label}>Dark Mode</Text>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#767577', true: theme.colors.primary }}
+              thumbColor={'#f4f3f4'}
+            />
+          </View>
+        </View>
+
+        {/* Personal Information */}
+        <View style={styles.formCard}>
+          <View style={styles.formHeader}>
+            <User size={18} color={theme.colors.primary} />
             <Text style={styles.formTitle}>Personal Information</Text>
           </View>
 
@@ -134,9 +258,10 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Password */}
         <View style={styles.formCard}>
           <View style={styles.formHeader}>
-            <KeyRound size={18} color="#60a5fa" />
+            <KeyRound size={18} color={theme.colors.primary} />
             <Text style={styles.formTitle}>Security & Password</Text>
           </View>
 
@@ -178,10 +303,10 @@ const Profile = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
+    backgroundColor: theme.colors.background,
   },
   contentContainer: {
     padding: 16,
@@ -191,10 +316,10 @@ const styles = StyleSheet.create({
   profileOverviewCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 58, 138, 0.2)',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     padding: 24,
     gap: 16,
   },
@@ -202,12 +327,17 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: {
-    color: '#ffffff',
+    color: theme.colors.surface,
     fontSize: 24,
     fontWeight: '900',
   },
@@ -222,29 +352,30 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   userName: {
-    color: '#ffffff',
+    color: theme.colors.text,
     fontSize: 20,
     fontWeight: '900',
   },
   userEmail: {
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   statusText: {
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     fontSize: 12,
     marginTop: 4,
   },
   statusActive: {
-    color: '#34d399',
+    color: theme.colors.primary,
     fontWeight: 'bold',
+    textTransform: 'capitalize',
   },
   formCard: {
-    backgroundColor: 'rgba(18, 18, 26, 0.8)',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     padding: 20,
     gap: 16,
   },
@@ -253,53 +384,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: theme.colors.border,
     paddingBottom: 12,
     marginBottom: 4,
   },
   formTitle: {
-    color: '#ffffff',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  statNumber: {
+    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  statLabel: {
+    color: theme.colors.textMuted,
+    fontSize: 10,
+    fontWeight: '600',
   },
   inputGroup: {
     gap: 8,
   },
   label: {
-    color: '#d1d5db',
+    color: theme.colors.text,
     fontSize: 12,
     fontWeight: 'bold',
   },
   input: {
-    backgroundColor: '#181824',
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#ffffff',
+    color: theme.colors.text,
     fontSize: 14,
   },
   disabledInput: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    color: '#6b7280',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    color: theme.colors.textMuted,
   },
   helperText: {
-    color: '#6b7280',
+    color: theme.colors.textMuted,
     fontSize: 10,
   },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.primary,
     borderRadius: 16,
     paddingVertical: 14,
     gap: 8,
     marginTop: 8,
   },
   primaryBtnText: {
-    color: '#ffffff',
+    color: theme.colors.surface,
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -307,16 +463,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.primary,
     borderRadius: 16,
     paddingVertical: 14,
     gap: 8,
     marginTop: 8,
   },
   secondaryBtnText: {
-    color: '#ffffff',
+    color: theme.colors.primary,
     fontSize: 14,
     fontWeight: 'bold',
   },

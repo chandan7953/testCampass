@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Mail, KeyRound, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
+import { Lock, KeyRound, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 
 import api from '../../api/axios';
+import { useTheme } from '../../utils/ThemeContext';
+import Logo from '../../components/Logo';
 
 const ResetPassword = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  
-  // Destructure email from params if it was passed from ForgotPassword
-  const { email: emailFromParams } = route.params || {};
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
+  const initialEmail = route.params?.email || "";
+
+  const [form, setForm] = useState({
+    email: initialEmail,
+    resetToken: "",
+    newPassword: "",
+  });
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const [form, setForm] = useState({
-    email: emailFromParams || "",
-    otp: "",
-    password: "",
-  });
 
   const handleChange = (name, value) => {
     setForm((prev) => ({
@@ -29,17 +32,17 @@ const ResetPassword = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.email || !form.otp || !form.password) {
-      return Alert.alert("Error", "Please fill in email, OTP, and new password");
+    if (!form.email || !form.resetToken || !form.newPassword) {
+      return Alert.alert("Error", "Please fill in email, reset token, and new password");
     }
 
     try {
       setLoading(true);
-      await api.post("/auth/reset-password", form);
-      Alert.alert("Success", "Password reset successfully! Please sign in.");
+      const res = await api.post("/auth/reset-password", form);
+      Alert.alert("Success", res.data?.message || "Password reset successful!");
       navigation.navigate("Login");
     } catch (error) {
-      Alert.alert("Reset Failed", error.response?.data?.message || "Password reset failed.");
+      Alert.alert("Reset Failed", error.response?.data?.message || "Failed to reset password.");
     } finally {
       setLoading(false);
     }
@@ -52,38 +55,23 @@ const ResetPassword = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.headerContainer}>
+          <Logo />
           <Text style={styles.headerTitle}>Reset Password</Text>
-          <Text style={styles.headerSubtitle}>Verify your OTP and choose a new password.</Text>
+          <Text style={styles.headerSubtitle}>Enter the reset code sent to your email and your new password.</Text>
         </View>
 
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Reset Code / Token</Text>
             <View style={styles.inputWrapper}>
-              <Mail size={18} color="#9ca3af" style={styles.inputIcon} />
+              <KeyRound size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="student@college.edu"
-                placeholderTextColor="#6b7280"
-                value={form.email}
-                onChangeText={(val) => handleChange('email', val)}
-                keyboardType="email-address"
+                placeholder="Enter reset token"
+                placeholderTextColor={theme.colors.textMuted}
+                value={form.resetToken}
+                onChangeText={(val) => handleChange('resetToken', val)}
                 autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>OTP Code</Text>
-            <View style={styles.inputWrapper}>
-              <KeyRound size={18} color="#9ca3af" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 6-digit OTP"
-                placeholderTextColor="#6b7280"
-                value={form.otp}
-                onChangeText={(val) => handleChange('otp', val)}
-                keyboardType="number-pad"
               />
             </View>
           </View>
@@ -91,17 +79,17 @@ const ResetPassword = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>New Password</Text>
             <View style={styles.inputWrapper}>
-              <Lock size={18} color="#9ca3af" style={styles.inputIcon} />
+              <Lock size={18} color={theme.colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor="#6b7280"
-                value={form.password}
-                onChangeText={(val) => handleChange('password', val)}
+                placeholderTextColor={theme.colors.textMuted}
+                value={form.newPassword}
+                onChangeText={(val) => handleChange('newPassword', val)}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                {showPassword ? <EyeOff size={18} color="#9ca3af" /> : <Eye size={18} color="#9ca3af" />}
+                {showPassword ? <EyeOff size={18} color={theme.colors.textMuted} /> : <Eye size={18} color={theme.colors.textMuted} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -112,20 +100,13 @@ const ResetPassword = () => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color={theme.colors.surface} size="small" />
             ) : (
               <View style={styles.submitBtnContent}>
-                <Text style={styles.submitBtnText}>Update Password</Text>
-                <ArrowRight size={16} color="#ffffff" />
+                <Text style={styles.submitBtnText}>Confirm New Password</Text>
+                <CheckCircle size={16} color={theme.colors.surface} />
               </View>
             )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Remembered password? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.footerLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -133,97 +114,85 @@ const ResetPassword = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  headerContainer: {
-    marginBottom: 40,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    lineHeight: 20,
-  },
-  formContainer: {
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#d1d5db',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 14,
-  },
-  eyeBtn: {
-    padding: 8,
-  },
-  submitBtn: {
-    backgroundColor: '#2563eb',
-    borderRadius: 16,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-  submitBtnDisabled: {
-    opacity: 0.7,
-  },
-  submitBtnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  submitBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    color: '#9ca3af',
-    fontSize: 14,
-  },
-  footerLink: {
-    color: '#60a5fa',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContainer: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: 24,
+    },
+    headerContainer: {
+      marginBottom: 32,
+      gap: 10,
+    },
+    headerTitle: {
+      fontSize: 30,
+      fontWeight: '900',
+      color: theme.colors.text,
+      marginTop: 8,
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: theme.colors.textMuted,
+      lineHeight: 20,
+    },
+    formContainer: {
+      gap: 20,
+    },
+    inputGroup: {
+      gap: 8,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.colors.text,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      height: 56,
+    },
+    inputIcon: {
+      marginRight: 12,
+    },
+    input: {
+      flex: 1,
+      color: theme.colors.text,
+      fontSize: 14,
+    },
+    eyeBtn: {
+      padding: 8,
+    },
+    submitBtn: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: 16,
+      height: 56,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 8,
+    },
+    submitBtnDisabled: {
+      opacity: 0.6,
+    },
+    submitBtnContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    submitBtnText: {
+      color: theme.colors.surface,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+  });
 
 export default ResetPassword;

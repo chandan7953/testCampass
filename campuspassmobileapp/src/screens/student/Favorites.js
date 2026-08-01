@@ -8,9 +8,12 @@ import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
 import EventCard from '../../components/EventCard';
 import EmptyState from '../../components/EmptyState';
+import { useTheme } from '../../utils/ThemeContext';
 
 const Favorites = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
@@ -48,7 +51,6 @@ const Favorites = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         <PageHeader
           breadcrumb="SAVED BOOKMARKS"
           title="My Favorite Events"
@@ -56,7 +58,7 @@ const Favorites = () => {
         />
 
         {loading ? (
-          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
         ) : favorites.length === 0 ? (
           <View style={{ marginTop: 24 }}>
             <EmptyState
@@ -94,30 +96,31 @@ const Favorites = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  eventsGrid: {
-    gap: 16,
-    marginTop: 16,
-  },
-  browseBtn: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
-    marginTop: 16,
-  },
-  browseBtnText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  }
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    eventsGrid: {
+      gap: 16,
+      marginTop: 16,
+    },
+    browseBtn: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 16,
+      marginTop: 16,
+    },
+    browseBtnText: {
+      color: theme.colors.surface,
+      fontWeight: 'bold',
+    },
+  });
 
 export default Favorites;

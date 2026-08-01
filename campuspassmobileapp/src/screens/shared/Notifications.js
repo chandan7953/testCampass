@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Bell, Trash2, Calendar, CreditCard, Ticket, ShieldCheck, CheckCheck } from 'lucide-react-native';
 import { useDispatch } from 'react-redux';
+
 import api from '../../api/axios';
 import { decrementUnreadCount, resetUnreadCount } from '../../redux/notificationSlice';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
+import { useTheme } from '../../utils/ThemeContext';
 
 const Notifications = () => {
   const dispatch = useDispatch();
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,7 +89,6 @@ const Notifications = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
             <PageHeader
@@ -95,14 +99,14 @@ const Notifications = () => {
           </View>
           {notifications.length > 0 && (
             <TouchableOpacity style={styles.markAllBtn} onPress={markAllAsRead}>
-              <CheckCheck size={16} color="#60a5fa" />
+              <CheckCheck size={18} color={theme.colors.primary} />
             </TouchableOpacity>
           )}
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3b82f6" />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
         ) : notifications.length === 0 ? (
           <View style={{ marginTop: 24 }}>
@@ -125,7 +129,7 @@ const Notifications = () => {
                   onPress={() => markAsRead(notification._id, notification.isRead)}
                 >
                   <View style={styles.iconContainer}>
-                    <Icon size={20} color="#60a5fa" />
+                    <Icon size={20} color={theme.colors.primary} />
                   </View>
 
                   <View style={styles.contentContainer}>
@@ -159,105 +163,106 @@ const Notifications = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  markAllBtn: {
-    backgroundColor: '#12121a',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 8,
-  },
-  loadingContainer: {
-    marginTop: 40,
-    alignItems: 'center',
-  },
-  listContainer: {
-    gap: 12,
-    marginTop: 16,
-  },
-  notificationCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: 'rgba(18, 18, 26, 0.8)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 16,
-    gap: 12,
-  },
-  unreadCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    gap: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  newBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-    borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  newBadgeText: {
-    color: '#60a5fa',
-    fontSize: 8,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  message: {
-    color: '#d1d5db',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  dateText: {
-    color: '#6b7280',
-    fontSize: 10,
-    fontFamily: 'monospace',
-    marginTop: 4,
-  },
-  deleteBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(244, 113, 133, 0.1)',
-  }
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    markAllBtn: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      padding: 12,
+      marginTop: 8,
+    },
+    loadingContainer: {
+      marginTop: 40,
+      alignItems: 'center',
+    },
+    listContainer: {
+      gap: 12,
+      marginTop: 16,
+    },
+    notificationCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: theme.colors.surface,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: 16,
+      gap: 12,
+    },
+    unreadCard: {
+      borderLeftWidth: 4,
+      borderLeftColor: theme.colors.primary,
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 0.2)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contentContainer: {
+      flex: 1,
+      gap: 4,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    title: {
+      color: theme.colors.text,
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    newBadge: {
+      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+      borderWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 0.3)',
+      borderRadius: 12,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    newBadgeText: {
+      color: theme.colors.primary,
+      fontSize: 8,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    message: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      lineHeight: 18,
+    },
+    dateText: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      marginTop: 4,
+    },
+    deleteBtn: {
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: 'rgba(244, 113, 133, 0.1)',
+    },
+  });
 
 export default Notifications;

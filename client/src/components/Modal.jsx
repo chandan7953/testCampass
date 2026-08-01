@@ -28,13 +28,13 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = "max-w-lg" }) => {
 
       {/* Modal Dialog */}
       <div
-        className={`relative w-full ${maxWidth} transform overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] p-6 shadow-2xl transition-all duration-300 md:p-8`}
+        className={`relative w-full ${maxWidth} transform overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-2xl transition-all duration-300 backdrop-blur-xl md:p-8`}
       >
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <h3 className="text-xl font-bold text-white">{title}</h3>
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <h3 className="text-xl font-bold text-text">{title}</h3>
           <button
             onClick={onClose}
-            className="rounded-xl p-2 text-gray-400 hover:bg-white/10 hover:text-white"
+            className="rounded-xl p-2 text-text-muted transition hover:bg-surface-secondary hover:text-text"
           >
             <X size={20} />
           </button>

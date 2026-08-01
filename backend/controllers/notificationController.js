@@ -7,33 +7,36 @@ const ApiError = require("../utils/ApiError");
 // Get all notifications
 
 const getNotifications = async (req, res, next) => {
-
   try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
 
-    const notifications =
-      await Notification.find({
-        userId: req.user.id,
-      })
-      .sort({
-        createdAt: -1,
-      });
+    const notifications = await Notification.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
+    const total = await Notification.countDocuments({ userId: req.user.id });
 
-    res
-      .status(200)
-      .json(
-        apiResponse(
-          200,
-          "Notifications fetched successfully",
-          notifications
-        )
-      );
-
-
+    res.status(200).json(
+      apiResponse(
+        200,
+        "Notifications fetched successfully",
+        {
+          notifications,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+          }
+        }
+      )
+    );
   } catch (error) {
     next(error);
   }
-
 };
 
 

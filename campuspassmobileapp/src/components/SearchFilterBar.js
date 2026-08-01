@@ -1,15 +1,19 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { Search, X } from 'lucide-react-native';
+import { useTheme } from '../utils/ThemeContext';
 
 const SearchFilterBar = ({
   searchTerm = "",
   onSearchChange,
-  placeholder = "Search events, venues...",
+  placeholder = "Search",
   categories = [],
   selectedCategory = "",
   onCategoryChange
 }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -64,23 +68,18 @@ const SearchFilterBar = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme) => StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(18, 18, 26, 0.6)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 16,
     marginBottom: 16,
     gap: 16,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#181824',
-    borderRadius: 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     height: 50,
   },
   searchIcon: {
@@ -88,7 +87,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#ffffff',
+    color: theme.colors.text,
     paddingHorizontal: 12,
     fontSize: 14,
   },
@@ -100,24 +99,24 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   categoryChip: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.colors.border,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   categoryChipActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.2)',
-    borderColor: 'rgba(59, 130, 246, 0.5)',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   categoryText: {
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     fontSize: 12,
     fontWeight: 'bold',
   },
   categoryTextActive: {
-    color: '#60a5fa',
+    color: theme.mode === 'dark' ? '#0F0F13' : '#FFFFFF',
   }
 });
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 import {
   Calendar,
   MapPin,
@@ -14,61 +15,82 @@ import {
   Map,
   CheckCircle,
   Building2,
-  Wifi,
-  ParkingCircle,
-  Projector,
 } from "lucide-react";
+
 import toast from "react-hot-toast";
+
 import api from "../../api/axios";
 import EventReviews from "../../components/EventReviews";
-
 import StatusBadge from "../../components/StatusBadge";
+
 import { formatDate, formatCurrency } from "../../utils/formatters";
 
 const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const { user } = useSelector((state) => state.auth);
 
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(null);
-  const [availableSeats, setAvailableSeats] = useState(null);
+  const [availableSeats, setAvailableSeats] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [savingFav, setSavingFav] = useState(false);
 
   useEffect(() => {
     fetchEventDetails();
-    if (user) checkFavoriteStatus();
-  }, [id]);
+
+    if (user) {
+      checkFavoriteStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user]);
 
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-      const eventRes = await api.get(`/events/${id}`);
-      setEvent(eventRes.data.data);
 
-      // Fetch tickets separately — may fail if tickets don't exist yet
+      const response = await api.get(`/events/${id}`);
+      const eventData = response.data.data;
+
+      setEvent(eventData);
+
+      /*
+        Seat calculation:
+        Available seats = Capacity - booked seats
+        fallback if ticket system unavailable
+      */
+
       try {
-        const ticketsRes = await api.get(`/tickets/event/${id}`);
-        const tickets = ticketsRes.data.data || [];
+        const ticketResponse = await api.get(`/tickets/event/${id}`);
+        const tickets = ticketResponse.data.data || [];
 
-        if (tickets.length > 0) {
-          // Ticket system exists — count available from ticket records
-          const seats = tickets.reduce(
-            (total, t) => total + (t.status === "active" ? t.remainingQuantity : 0),
-            0
-          );
-          setAvailableSeats(seats);
+        if (tickets.length) {
+          const remaining = tickets.reduce((total, ticket) => {
+            if (ticket.status === "active") {
+              return total + Number(ticket.remainingQuantity || 0);
+            }
+            return total;
+          }, 0);
+
+          setAvailableSeats(remaining);
         } else {
-          // No tickets created yet — fall back to event capacity
-          setAvailableSeats(null);
+          setAvailableSeats(
+            Math.max(
+              0,
+              (eventData.capacity || 0) - (eventData.bookedSeats || 0),
+            ),
+          );
         }
       } catch {
-        // Ticket fetch failed — fall back to capacity-based estimate
-        setAvailableSeats(null);
+        setAvailableSeats(
+          Math.max(0, (eventData.capacity || 0) - (eventData.bookedSeats || 0)),
+        );
       }
     } catch (error) {
-      toast.error("Failed to load event details");
+      toast.error(
+        error.response?.data?.message || "Failed to load event details",
+      );
     } finally {
       setLoading(false);
     }
@@ -76,17 +98,21 @@ const EventDetail = () => {
 
   const checkFavoriteStatus = async () => {
     try {
-      const res = await api.get("/users/favorites");
-      const favList = res.data.data || [];
-      setIsFavorite(favList.some((fav) => fav.event?._id === id || fav.event === id));
-    } catch {
-      // Silent
+      const response = await api.get("/users/favorites");
+      const favorites = response.data.data || [];
+
+      setIsFavorite(
+        favorites.some((item) => item.event?._id === id || item.event === id),
+      );
+    } catch (error) {
+      console.log("Favorite check failed");
     }
   };
 
   const toggleFavorite = async () => {
     try {
       setSavingFav(true);
+
       if (isFavorite) {
         await api.delete(`/users/favorites/${id}`);
         setIsFavorite(false);
@@ -97,7 +123,7 @@ const EventDetail = () => {
         toast.success("Added to favorites");
       }
     } catch (error) {
-      toast.error("Failed to update favorites");
+      toast.error(error.response?.data?.message || "Favorite update failed");
     } finally {
       setSavingFav(false);
     }
@@ -106,20 +132,24 @@ const EventDetail = () => {
   if (loading) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-        <p className="text-sm font-semibold text-gray-400">Loading Event Details...</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-sm font-semibold text-text-muted">
+          Loading Event Details...
+        </p>
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="py-12 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-white">Event Not Found</h2>
-        <p className="text-sm text-gray-400">The event you are looking for does not exist or has been removed.</p>
+      <div className="space-y-4 py-12 text-center">
+        <h2 className="text-2xl font-bold text-text">Event Not Found</h2>
+        <p className="text-sm text-text-muted">
+          The event does not exist or has been removed.
+        </p>
         <button
           onClick={() => navigate(-1)}
-          className="rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white"
+          className="rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-primary/30 transition hover:bg-primary-hover hover:scale-[1.02]"
         >
           Go Back
         </button>
@@ -128,8 +158,11 @@ const EventDetail = () => {
   }
 
   const venue = event.venue || {};
-  const seatsAvailable = availableSeats !== null ? availableSeats : (event.capacity || 0) - (event.bookedSeats || 0);
-  const isBookable = user?.role === "student" && event.status === "approved" && seatsAvailable > 0;
+  const seatsAvailable = availableSeats;
+  const isBookable =
+    user?.role === "student" &&
+    event.status === "approved" &&
+    seatsAvailable > 0;
 
   return (
     <div className="space-y-8">
@@ -137,7 +170,7 @@ const EventDetail = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] px-4 py-2.5 text-xs font-bold text-gray-300 transition hover:bg-white/10 hover:text-white"
+          className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2.5 text-xs font-bold text-text-muted transition hover:bg-surface-secondary hover:text-text"
         >
           <ArrowLeft size={16} />
           Back to Events
@@ -150,11 +183,11 @@ const EventDetail = () => {
               disabled={savingFav}
               className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition ${
                 isFavorite
-                  ? "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                  : "border-white/10 bg-[#12121A] text-gray-300 hover:bg-white/10"
+                  ? "border-danger/30 bg-danger/10 text-danger"
+                  : "border-border bg-surface text-text-muted hover:bg-surface-secondary hover:text-text"
               }`}
             >
-              <Heart size={16} className={isFavorite ? "fill-rose-400" : ""} />
+              <Heart size={16} className={isFavorite ? "fill-danger" : ""} />
               {isFavorite ? "Saved" : "Save Event"}
             </button>
           )}
@@ -162,75 +195,83 @@ const EventDetail = () => {
           <button
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
-              toast.success("Event link copied to clipboard!");
+              toast.success("Event link copied!");
             }}
-            className="rounded-2xl border border-white/10 bg-[#12121A] p-2.5 text-gray-300 transition hover:bg-white/10 hover:text-white"
+            className="rounded-2xl border border-border bg-surface p-2.5 text-text-muted transition hover:bg-surface-secondary hover:text-text"
           >
             <Share2 size={16} />
           </button>
         </div>
       </div>
 
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] shadow-2xl backdrop-blur-xl">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-2xl">
         <div className="relative h-80 w-full overflow-hidden sm:h-96">
           <img
             src={
               event.poster ||
-              "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80"
+              "https://images.unsplash.com/photo-1540575467063-178a50c2df87"
             }
             alt={event.title}
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#12121A] via-[#12121A]/50 to-transparent" />
 
-          {/* Floating Badges */}
-          <div className="absolute left-6 top-6 flex items-center gap-3">
-            <span className="rounded-full border border-white/20 bg-black/60 px-3.5 py-1 text-xs font-bold text-white backdrop-blur-md">
-              <Tag size={12} className="mr-1.5 inline text-blue-400" />
-              {event.category?.name || "Campus Fest"}
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/60 to-transparent" />
+
+          <div className="absolute left-6 top-6 flex gap-3">
+            <span className="rounded-full border border-border/50 bg-surface/80 px-3.5 py-1 text-xs font-bold text-text backdrop-blur-sm">
+              <Tag size={12} className="mr-1 inline text-primary" />
+              {event.category?.name || "Campus Event"}
             </span>
+
             <StatusBadge status={event.status || "pending"} />
           </div>
         </div>
 
-        {/* Header Details */}
-        <div className="relative -mt-16 p-6 sm:p-8 space-y-6">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+        <div className="relative -mt-16 space-y-6 p-6 sm:p-8">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <h1 className="text-3xl font-black text-text sm:text-5xl">
                 {event.title}
               </h1>
-              <p className="text-sm font-semibold text-blue-400">
-                Organized by: {event.organizer?.fullName || "Campus Student Council"}
+              <p className="mt-2 text-sm font-semibold text-primary">
+                Organized by: {event.organizer?.fullName || "Campus Organizer"}
               </p>
             </div>
 
-            <div className="shrink-0 rounded-2xl border border-blue-500/30 bg-blue-600/20 p-4 text-center backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Ticket Price</p>
-              <p className="text-3xl font-black text-white">{formatCurrency(event.price)}</p>
+            <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-center backdrop-blur-sm">
+              <p className="text-[10px] font-bold uppercase text-primary">
+                Ticket Price
+              </p>
+              <p className="text-3xl font-black text-text">
+                {formatCurrency(event.price || 0)}
+              </p>
             </div>
           </div>
 
-          {/* Action Row — only for students on approved events */}
+          {/* Booking Actions */}
           {user?.role === "student" && event.status === "approved" && (
-            <div className="flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
+            <div className="flex flex-wrap gap-4 border-t border-border pt-6">
               <button
-                onClick={() => navigate(`/event/${event._id || event.id}/book`)}
-                disabled={seatsAvailable <= 0}
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                disabled={!isBookable}
+                onClick={() => {
+                  if (isBookable) {
+                    navigate(`/event/${event._id}/book`);
+                  }
+                }}
+                className="flex items-center gap-2 rounded-2xl bg-primary px-8 py-4 font-bold text-white shadow-lg shadow-primary/30 transition hover:bg-primary-hover hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
               >
                 <Ticket size={20} />
-                <span>{seatsAvailable > 0 ? "Book Pass Now" : "Sold Out"}</span>
+                {seatsAvailable > 0 ? "Book Pass Now" : "Sold Out"}
               </button>
 
               {venue.latitude && venue.longitude && (
                 <button
-                  onClick={() => navigate(`/event/${event._id || event.id}/map`)}
-                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-white transition hover:bg-white/10"
+                  onClick={() => navigate(`/event/${event._id}/map`)}
+                  className="flex items-center gap-2 rounded-2xl border border-border bg-surface-secondary px-6 py-4 text-sm font-bold text-text-muted transition hover:bg-surface hover:text-text"
                 >
                   <Map size={18} />
-                  <span>View Venue Map</span>
+                  View Venue Map
                 </button>
               )}
             </div>
@@ -240,66 +281,92 @@ const EventDetail = () => {
 
       {/* Details Grid */}
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Left 2 cols */}
+        {/* Left Content */}
         <div className="space-y-8 lg:col-span-2">
           {/* About Event */}
-          <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-4">
-            <h3 className="text-xl font-bold text-white">About This Event</h3>
-            <p className="text-sm leading-relaxed text-gray-300 whitespace-pre-line">
-              {event.description || "Join us for an incredible campus experience!"}
+          <div className="space-y-4 rounded-3xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
+            <h3 className="text-xl font-bold text-text">About This Event</h3>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-text-muted">
+              {event.description || "Join us for an amazing campus experience!"}
             </p>
           </div>
 
           {/* Guidelines */}
-          <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-4">
-            <h3 className="text-xl font-bold text-white">Guidelines & Details</h3>
-            <ul className="space-y-3 text-sm text-gray-300">
-              <li className="flex items-start gap-2.5">
-                <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+          <div className="space-y-4 rounded-3xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
+            <h3 className="text-xl font-bold text-text">
+              Guidelines & Details
+            </h3>
+            <ul className="space-y-3 text-sm text-text-muted">
+              <li className="flex gap-3">
+                <CheckCircle
+                  size={18}
+                  className="mt-0.5 shrink-0 text-green-400"
+                />
                 <span>E-Ticket QR pass is required at the venue entrance.</span>
               </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                <span>College Student ID Card must be produced alongside your ticket.</span>
+
+              <li className="flex gap-3">
+                <CheckCircle
+                  size={18}
+                  className="mt-0.5 shrink-0 text-green-400"
+                />
+                <span>Carry your college ID card during entry.</span>
               </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                <span>Please report 15 minutes prior to the scheduled start time.</span>
+
+              <li className="flex gap-3">
+                <CheckCircle
+                  size={18}
+                  className="mt-0.5 shrink-0 text-green-400"
+                />
+                <span>Reach the venue 15 minutes before event start time.</span>
               </li>
+
               {event.registrationDeadline && (
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle size={18} className="text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Registration closes: {formatDate(event.registrationDeadline)}</span>
+                <li className="flex gap-3">
+                  <CheckCircle
+                    size={18}
+                    className="mt-0.5 shrink-0 text-green-400"
+                  />
+                  <span>
+                    Registration closes:{" "}
+                    {formatDate(event.registrationDeadline)}
+                  </span>
                 </li>
               )}
             </ul>
           </div>
         </div>
 
-        {/* Right col */}
+        {/* Right Sidebar */}
         <div className="space-y-6">
           {/* Event Logistics */}
-          <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-6">
-            <h3 className="text-lg font-bold text-white border-b border-white/10 pb-3">Event Logistics</h3>
+          <div className="space-y-6 rounded-3xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
+            <h3 className="border-b border-border pb-3 text-lg font-bold text-text">
+              Event Logistics
+            </h3>
 
-            <div className="space-y-4 text-sm text-gray-300">
-              <div className="flex items-start gap-3">
-                <Calendar size={18} className="text-blue-400 shrink-0 mt-0.5" />
+            <div className="space-y-5 text-sm text-text-muted">
+              <div className="flex gap-3">
+                <Calendar size={18} className="mt-0.5 text-primary" />
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase">Date</p>
-                  <p className="font-bold text-white">{formatDate(event.startDate)}</p>
+                  <p className="text-xs uppercase text-text-muted">Date</p>
+                  <p className="font-bold text-text">
+                    {formatDate(event.startDate)}
+                  </p>
                   {event.endDate && event.endDate !== event.startDate && (
-                    <p className="text-xs text-gray-500 mt-0.5">to {formatDate(event.endDate)}</p>
+                    <p className="text-xs text-text-muted">
+                      To {formatDate(event.endDate)}
+                    </p>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <Clock size={18} className="text-blue-400 shrink-0 mt-0.5" />
+              <div className="flex gap-3">
+                <Clock size={18} className="mt-0.5 text-primary" />
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase">Time</p>
-                  <p className="font-bold text-white">
-                    {new Date(event.startDate || Date.now()).toLocaleTimeString("en-US", {
+                  <p className="text-xs uppercase text-text-muted">Time</p>
+                  <p className="font-bold text-text">
+                    {new Date(event.startDate).toLocaleTimeString("en-US", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -307,66 +374,83 @@ const EventDetail = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <Users size={18} className="text-blue-400 shrink-0 mt-0.5" />
+              <div className="flex gap-3">
+                <Users size={18} className="mt-0.5 text-primary" />
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase">Availability</p>
-                  <p className="font-bold text-white">
-                    {seatsAvailable > 0 ? `${seatsAvailable} seats remaining` : "Fully Booked"}
+                  <p className="text-xs uppercase text-text-muted">
+                    Availability
+                  </p>
+                  <p className="font-bold text-text">
+                    {seatsAvailable > 0
+                      ? `${seatsAvailable} seats remaining`
+                      : "Fully Booked"}
                   </p>
                   {event.capacity && (
-                    <p className="text-xs text-gray-500 mt-0.5">Total capacity: {event.capacity}</p>
+                    <p className="text-xs text-text-muted">
+                      Capacity: {event.capacity}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Venue Details Card */}
-          <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-5">
-            <h3 className="text-lg font-bold text-white border-b border-white/10 pb-3 flex items-center gap-2">
-              <Building2 size={18} className="text-blue-400" />
+          {/* Venue Details */}
+          <div className="space-y-5 rounded-3xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
+            <h3 className="flex items-center gap-2 border-b border-border pb-3 text-lg font-bold text-text">
+              <Building2 size={18} className="text-primary" />
               Venue Details
             </h3>
 
-            <div className="space-y-4 text-sm text-gray-300">
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
+            <div className="space-y-5 text-sm text-text-muted">
+              <div className="flex gap-3">
+                <MapPin size={18} className="mt-0.5 text-primary" />
                 <div>
-                  <p className="font-bold text-white">{venue.name || "Campus Auditorium"}</p>
-                  {venue.address && <p className="text-xs text-gray-400 mt-0.5">{venue.address}</p>}
+                  <p className="font-bold text-text">
+                    {venue.name || "Campus Auditorium"}
+                  </p>
+                  {venue.address && (
+                    <p className="text-xs text-text-muted">{venue.address}</p>
+                  )}
                 </div>
               </div>
 
               {venue.collegeName && (
-                <div className="flex items-start gap-3">
-                  <Building2 size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                <div className="flex gap-3">
+                  <Building2 size={18} className="text-primary" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase">Institution</p>
-                    <p className="font-bold text-white">{venue.collegeName}</p>
+                    <p className="text-xs uppercase text-text-muted">
+                      Institution
+                    </p>
+                    <p className="font-bold text-text">{venue.collegeName}</p>
                   </div>
                 </div>
               )}
 
               {venue.capacity && (
-                <div className="flex items-start gap-3">
-                  <Users size={18} className="text-blue-400 shrink-0 mt-0.5" />
+                <div className="flex gap-3">
+                  <Users size={18} className="text-primary" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase">Venue Capacity</p>
-                    <p className="font-bold text-white">{venue.capacity} seats</p>
+                    <p className="text-xs uppercase text-text-muted">
+                      Venue Capacity
+                    </p>
+                    <p className="font-bold text-text">
+                      {venue.capacity} Seats
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* Venue Facilities */}
-              {venue.facilities && venue.facilities.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-400 uppercase">Facilities Available</p>
+              {venue.facilities?.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs uppercase text-text-muted">
+                    Facilities Available
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {venue.facilities.map((facility, idx) => (
+                    {venue.facilities.map((facility, index) => (
                       <span
-                        key={idx}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-gray-300"
+                        key={index}
+                        className="rounded-full border border-border bg-surface-secondary px-3 py-1 text-xs text-text-muted"
                       >
                         {facility}
                       </span>
@@ -379,6 +463,7 @@ const EventDetail = () => {
         </div>
       </div>
 
+      {/* Reviews */}
       <EventReviews eventId={id} user={user} />
     </div>
   );

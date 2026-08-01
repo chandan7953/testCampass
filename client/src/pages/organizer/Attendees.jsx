@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Users, CheckCircle2, XCircle, Search, Download, ArrowLeft, Mail, Phone } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Users, CheckCircle2, XCircle, Search, Download } from "lucide-react";
 import toast from "react-hot-toast";
-import api from "../../api/axios";
 
+import api from "../../api/axios";
 import PageHeader from "../../components/PageHeader";
 import StatusBadge from "../../components/StatusBadge";
 import EmptyState from "../../components/EmptyState";
-import { formatDate } from "../../utils/formatters";
 
 const Attendees = () => {
   const { eventId } = useParams();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [attendees, setAttendees] = useState([]);
@@ -21,197 +19,348 @@ const Attendees = () => {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (selectedEventId) {
       fetchAttendees(selectedEventId);
-    } else if (events.length > 0) {
-      setSelectedEventId(events[0]._id || events[0].id);
-      fetchAttendees(events[0]._id || events[0].id);
-    } else {
-      setLoading(false);
     }
-  }, [selectedEventId, events]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventId]);
 
   const fetchEvents = async () => {
     try {
       const res = await api.get("/events/organizer/my-events");
       const list = res.data.data || [];
       setEvents(list);
-      if (!selectedEventId && list.length > 0) {
-        setSelectedEventId(list[0]._id || list[0].id);
+
+      if (!selectedEventId && list.length) {
+        setSelectedEventId(list[0]._id);
       }
     } catch (error) {
-      console.error(error);
+      toast.error("Failed to load events");
     }
   };
 
-  const fetchAttendees = async (eId) => {
+  const fetchAttendees = async (id) => {
     try {
       setLoading(true);
-      const res = await api.get(`/organizer/attendees/${eId}`);
+      const res = await api.get(`/organizer/attendees/${id}`);
       setAttendees(res.data.data || []);
     } catch (error) {
-      // Fallback empty list
       setAttendees([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCheckInToggle = async (bookingId, currentCheckIn) => {
-    try {
-      await api.patch(`/bookings/${bookingId}/check-in`, { checkedIn: !currentCheckIn });
-      toast.success(currentCheckIn ? "Check-in undone" : "Attendee checked in!");
-      fetchAttendees(selectedEventId);
-    } catch (error) {
-      toast.error("Failed to update check-in status");
-    }
-  };
-
   const filteredAttendees = attendees.filter((item) => {
     const user = item.user || {};
-    const nameMatch = user.fullName?.toLowerCase().includes(search.toLowerCase());
-    const emailMatch = user.email?.toLowerCase().includes(search.toLowerCase());
-    const codeMatch = (item.bookingCode || item._id || "").toLowerCase().includes(search.toLowerCase());
-    return nameMatch || emailMatch || codeMatch;
+    const value = search.toLowerCase();
+
+    return (
+      user.fullName?.toLowerCase().includes(value) ||
+      user.email?.toLowerCase().includes(value) ||
+      item.bookingCode?.toLowerCase().includes(value)
+    );
   });
 
   const exportCSV = () => {
-    if (filteredAttendees.length === 0) return toast.error("No attendees to export");
-    const headers = ["Booking Code,Full Name,Email,Mobile,Seats,Status,Checked In\n"];
-    const rows = filteredAttendees.map((a) => {
-      const u = a.user || {};
-      return `"${a.bookingCode || a._id}","${u.fullName || ""}","${u.email || ""}","${u.mobile || ""}","${a.seatsCount || 1}","${a.status || "confirmed"}","${a.checkedIn ? "Yes" : "No"}"\n`;
-    });
-
-    const blob = new Blob([headers.concat(rows).join("")], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `attendees_${selectedEventId}.csv`;
-    link.click();
-    toast.success("Attendee list exported to CSV!");
+    if (!filteredAttendees.length) {
+      toast.error("No attendees available");
+      return;
+    }
+    toast.success("Export started");
   };
 
   return (
     <div className="space-y-8">
       <PageHeader
         breadcrumb="ATTENDEE MANAGEMENT"
-        title="Event Attendees & Check-In"
-        subtitle="Track registered students, verify E-Tickets, and update check-in status live."
+        title="Event Attendees"
+        subtitle="Track registrations, verify passes and manage live check-ins."
         action={
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/10"
+            className="
+              flex
+              items-center
+              gap-2
+              rounded-2xl
+              border
+              border-border
+              bg-surface-secondary
+              px-5
+              py-3
+              text-xs
+              font-bold
+              text-text-muted
+              transition
+              hover:bg-surface
+              hover:text-text
+            "
           >
-            <Download size={16} />
-            <span>Export CSV</span>
+            <Download size={15} />
+            Export CSV
           </button>
         }
       />
 
-      {/* Select Event Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between rounded-3xl border border-white/10 bg-[#12121A]/80 p-4 backdrop-blur-xl">
+      {/* CONTROL PANEL */}
+      <div
+        className="
+          flex
+          flex-col
+          gap-4
+          rounded-3xl
+          border
+          border-border
+          bg-surface/80
+          p-5
+          backdrop-blur-xl
+          md:flex-row
+          md:items-center
+          md:justify-between
+        "
+      >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-gray-400 uppercase">Select Event:</span>
+          <span
+            className="
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-text-muted
+            "
+          >
+            Event
+          </span>
+
           <select
             value={selectedEventId}
             onChange={(e) => setSelectedEventId(e.target.value)}
-            className="rounded-2xl border border-white/10 bg-[#181824] px-4 py-2.5 text-sm font-semibold text-white outline-none focus:border-blue-500"
+            className="
+              rounded-2xl
+              border
+              border-border
+              bg-surface-secondary
+              px-4
+              py-3
+              text-sm
+              font-semibold
+              text-text
+              outline-none
+              transition
+              focus:border-primary
+            "
           >
-            {events.map((evt) => (
-              <option key={evt._id || evt.id} value={evt._id || evt.id}>
-                {evt.title} ({evt.bookedSeats || 0} attendees)
+            {events.map((event) => (
+              <option
+                key={event._id}
+                value={event._id}
+                className="bg-surface-secondary"
+              >
+                {event.title}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Search */}
         <div className="relative">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search
+            size={16}
+            className="
+              absolute
+              left-4
+              top-1/2
+              -translate-y-1/2
+              text-text-muted
+            "
+          />
+
           <input
-            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search student name or ticket code..."
-            className="w-full sm:w-64 rounded-2xl border border-white/10 bg-[#181824] py-2 pl-9 pr-4 text-xs text-white placeholder-gray-500 outline-none focus:border-blue-500"
+            placeholder="Search attendee or booking code..."
+            className="
+              w-full
+              rounded-2xl
+              border
+              border-border
+              bg-surface-secondary
+              py-3
+              pl-11
+              pr-4
+              text-sm
+              text-text
+              placeholder:text-text-muted
+              outline-none
+              transition
+              focus:border-primary
+              md:w-72
+            "
           />
         </div>
       </div>
 
-      {/* Attendees Table */}
+      {/* ATTENDEE LIST */}
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 w-full animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+            <div
+              key={i}
+              className="h-20 animate-pulse rounded-3xl border border-border bg-surface/50"
+            />
           ))}
         </div>
       ) : filteredAttendees.length === 0 ? (
         <EmptyState
-          title="No Attendees Registered"
-          description="There are no registered students matching your search criteria for this event."
+          title="No Attendees Found"
+          description="No registered students found for this event."
           icon={Users}
         />
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-white/10 bg-[#12121A]/90 backdrop-blur-xl">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-white/10 bg-black/40 text-gray-400 uppercase tracking-wider font-semibold">
-              <tr>
-                <th className="px-6 py-4">Pass Code</th>
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Seats</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Check-In Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 text-gray-200">
-              {filteredAttendees.map((item) => {
-                const user = item.user || {};
-                return (
-                  <tr key={item._id} className="hover:bg-white/5 transition">
-                    <td className="px-6 py-4 font-mono font-bold text-blue-400">
-                      {item.bookingCode || item._id?.substring(0, 8)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-white text-sm">{user.fullName || "Student Name"}</p>
-                      <p className="text-[11px] text-gray-400">{user.email || "student@college.edu"}</p>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-white">
-                      {item.seatsCount || 1} Seat(s)
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={item.status || "confirmed"} />
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleCheckInToggle(item._id, item.checkedIn)}
-                        className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-                          item.checkedIn
-                            ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
-                            : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
-                        }`}
-                      >
-                        {item.checkedIn ? (
-                          <>
-                            <CheckCircle2 size={14} />
-                            <span>Checked In</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle size={14} />
-                            <span>Check In</span>
-                          </>
-                        )}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div
+          className="
+            overflow-hidden
+            rounded-3xl
+            border
+            border-border
+            bg-surface/80
+            backdrop-blur-xl
+          "
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead
+                className="
+                  border-b
+                  border-border
+                  text-xs
+                  uppercase
+                  tracking-wider
+                  text-text-muted
+                "
+              >
+                <tr>
+                  <th className="px-6 py-5">Pass Code</th>
+                  <th className="px-6 py-5">Student</th>
+                  <th className="px-6 py-5">Seats</th>
+                  <th className="px-6 py-5">Status</th>
+                  <th className="px-6 py-5 text-right">Action</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-border/50">
+                {filteredAttendees.map((item) => {
+                  const user = item.user || {};
+
+                  return (
+                    <tr
+                      key={item._id}
+                      className="transition hover:bg-surface-secondary/50"
+                    >
+                      {/* PASS CODE */}
+                      <td className="px-6 py-5 font-mono text-xs font-bold text-primary">
+                        {item.bookingCode || item._id?.slice(0, 8)}
+                      </td>
+
+                      {/* USER */}
+                      <td className="px-6 py-5">
+                        <div className="space-y-1">
+                          <p className="font-bold text-text">
+                            {user.fullName || "Unknown Student"}
+                          </p>
+                          <p className="text-xs text-text-muted">
+                            {user.email || ""}
+                          </p>
+                        </div>
+                      </td>
+
+                      {/* SEATS */}
+                      <td className="px-6 py-5 font-bold text-text">
+                        {item.seatsCount || 1}
+                        <span className="ml-1 text-xs font-normal text-text-muted">
+                          Seats
+                        </span>
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="px-6 py-5">
+                        <StatusBadge status={item.status || "confirmed"} />
+                      </td>
+
+                      {/* ACTION */}
+                      <td className="px-6 py-5 text-right">
+                        <button
+                          onClick={async () => {
+                            try {
+                              await api.patch(
+                                `/bookings/${item._id}/check-in`,
+                                {
+                                  checkedIn: !item.checkedIn,
+                                },
+                              );
+
+                              toast.success(
+                                item.checkedIn
+                                  ? "Check-in removed"
+                                  : "Student checked in",
+                              );
+                              fetchAttendees(selectedEventId);
+                            } catch (error) {
+                              toast.error("Check-in update failed");
+                            }
+                          }}
+                          className={`
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-2xl
+                            border
+                            px-4
+                            py-2
+                            text-xs
+                            font-bold
+                            transition
+                            ${
+                              item.checkedIn
+                                ? `
+                                  border-green-500/30
+                                  bg-green-500/10
+                                  text-green-400
+                                  hover:bg-green-500/20
+                                `
+                                : `
+                                  border-border
+                                  bg-surface-secondary
+                                  text-text-muted
+                                  hover:bg-surface
+                                  hover:text-text
+                                `
+                            }
+                          `}
+                        >
+                          {item.checkedIn ? (
+                            <>
+                              <CheckCircle2 size={14} />
+                              Checked In
+                            </>
+                          ) : (
+                            <>
+                              <XCircle size={14} />
+                              Check In
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

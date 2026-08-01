@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LayoutDashboard, ClipboardList, PlusCircle, Users, User } from 'lucide-react-native';
+import { useTheme } from '../utils/ThemeContext';
 
 // Organizer Screens
 import OrgDashboard from '../screens/organizer/OrgDashboard';
@@ -12,15 +13,17 @@ import Profile from '../screens/shared/Profile';
 const Tab = createBottomTabNavigator();
 
 const OrganizerTabs = () => {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        headerStyle: { backgroundColor: '#0a0a0f', shadowColor: 'transparent', elevation: 0 },
-        headerTintColor: '#fff',
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: { backgroundColor: '#181824', borderTopWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' },
+        headerStyle: { backgroundColor: theme.colors.background, shadowColor: 'transparent', elevation: 0 },
+        headerTintColor: theme.colors.text,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarStyle: { backgroundColor: theme.colors.surface, borderTopWidth: 1, borderColor: theme.colors.border },
       }}
     >
       <Tab.Screen 

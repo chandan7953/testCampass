@@ -264,7 +264,7 @@ const ManageAllEvents = () => {
   );
 };
 
-const styles = StyleSheet.create({
+var styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0f',

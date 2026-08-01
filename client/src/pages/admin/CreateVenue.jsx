@@ -1,860 +1,391 @@
 import { useEffect, useState } from "react";
 
-import {
-  Building2,
-  MapPin,
-  Users,
-  Plus,
-  ArrowLeft,
-} from "lucide-react";
+import { Building2, MapPin, Users, Plus, ArrowLeft } from "lucide-react";
 
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import toast from "react-hot-toast";
 
 import api from "../../api/axios";
 
-
-
 const CreateVenue = () => {
-
-
   const navigate = useNavigate();
 
   const { id } = useParams();
 
-
   const isEditMode = Boolean(id);
 
+  const [loading, setLoading] = useState(false);
 
-
-  const [loading, setLoading] =
-    useState(false);
-
-
-
-  const [formData, setFormData] =
-    useState({
-
-      name: "",
-      address: "",
-      collegeName: "",
-      capacity: "",
-      facilities: "",
-      latitude: "",
-      longitude: "",
-
-    });
-
-
-
-
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    collegeName: "",
+    capacity: "",
+    facilities: "",
+    latitude: "",
+    longitude: "",
+  });
 
   useEffect(() => {
-
     if (isEditMode) {
-
       fetchVenue();
-
     }
-
   }, [id]);
 
-
-
-
-
-
-
   const fetchVenue = async () => {
-
     try {
+      const res = await api.get(`/venues/${id}`);
 
-
-      const res =
-        await api.get(
-          `/venues/${id}`
-        );
-
-
-      const venue =
-        res.data.data;
-
-
+      const venue = res.data.data;
 
       setFormData({
+        name: venue.name || "",
 
-        name:
-          venue.name || "",
+        address: venue.address || "",
 
+        collegeName: venue.collegeName || "",
 
-        address:
-          venue.address || "",
+        capacity: venue.capacity || "",
 
+        facilities: venue.facilities ? venue.facilities.join(", ") : "",
 
-        collegeName:
-          venue.collegeName || "",
+        latitude: venue.latitude || "",
 
-
-        capacity:
-          venue.capacity || "",
-
-
-        facilities:
-          venue.facilities
-            ?
-            venue.facilities.join(", ")
-            :
-            "",
-
-
-        latitude:
-          venue.latitude || "",
-
-
-        longitude:
-          venue.longitude || "",
-
+        longitude: venue.longitude || "",
       });
-
-
-
     } catch (error) {
-
-
-      toast.error(
-        "Failed to load venue"
-      );
-
-
+      toast.error("Failed to load venue");
     }
-
   };
-
-
-
-
-
-
-
-
 
   const handleChange = (e) => {
-
-
     setFormData({
-
       ...formData,
 
-      [e.target.name]:
-        e.target.value
-
+      [e.target.name]: e.target.value,
     });
-
-
   };
-
-
-
-
-
-
-
-
 
   const handleSubmit = async (e) => {
-
-
     e.preventDefault();
 
-
-
     try {
-
-
       setLoading(true);
 
-
-
       const data = {
+        name: formData.name,
 
+        address: formData.address,
 
-        name:
-          formData.name,
+        collegeName: formData.collegeName,
 
+        capacity: Number(formData.capacity),
 
-        address:
-          formData.address,
+        facilities: formData.facilities
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean),
 
+        latitude: formData.latitude ? Number(formData.latitude) : undefined,
 
-        collegeName:
-          formData.collegeName,
-
-
-        capacity:
-          Number(formData.capacity),
-
-
-
-        facilities:
-          formData.facilities
-            .split(",")
-            .map(item => item.trim())
-            .filter(Boolean),
-
-
-
-
-        latitude:
-          formData.latitude
-            ?
-            Number(formData.latitude)
-            :
-            undefined,
-
-
-
-        longitude:
-          formData.longitude
-            ?
-            Number(formData.longitude)
-            :
-            undefined,
-
-
+        longitude: formData.longitude ? Number(formData.longitude) : undefined,
       };
 
-
-
-
-
-
-
       if (isEditMode) {
+        await api.put(`/venues/${id}`, data);
 
+        toast.success("Venue updated successfully");
+      } else {
+        await api.post("/venues", data);
 
-        await api.put(
-
-          `/venues/${id}`,
-
-          data
-
-        );
-
-
-        toast.success(
-          "Venue updated successfully"
-        );
-
-
-      }
-      else {
-
-
-        await api.post(
-
-          "/venues",
-
-          data
-
-        );
-
-
-        toast.success(
-          "Venue created successfully"
-        );
-
-
+        toast.success("Venue created successfully");
       }
 
-
-
-
-
-
-      navigate(
-        "/admin/venues"
-      );
-
-
-
-
+      navigate("/admin/venues");
     } catch (error) {
-
-
-      toast.error(
-
-        error.response?.data?.message ||
-        "Something went wrong"
-
-      );
-
-
-    }
-    finally {
-
-
+      toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
       setLoading(false);
-
-
     }
-
-
   };
 
-
-
-
-
-
-
-
-
   return (
-
     <div
       className="
-        mx-auto
-        max-w-3xl
-        space-y-6
-      "
+mx-auto
+max-w-3xl
+space-y-8
+"
     >
-
-
-
-
-      {/* Back */}
-
-
       <button
-
-        onClick={() =>
-          navigate(-1)
-        }
-
+        onClick={() => navigate(-1)}
         className="
-          flex
-          items-center
-          gap-2
-          rounded-xl
-          border
-          border-white/10
-          bg-white/5
-          px-4
-          py-2
-          text-sm
-          text-gray-300
-          hover:bg-white/10
-        "
-
+flex
+items-center
+gap-2
+rounded-2xl
+border
+border-border
+bg-surface
+px-4
+py-2
+text-sm
+font-semibold
+text-text-muted
+hover:text-text
+hover:bg-primary/10
+transition
+"
       >
-
         <ArrowLeft size={17} />
-
         Back
-
       </button>
-
-
-
-
-
-
-
-
-
-      {/* Header */}
-
 
       <div
         className="
-          flex
-          items-center
-          gap-3
-        "
+flex
+items-center
+gap-4
+"
       >
-
-
-        <Building2
-
-          size={28}
-
+        <div
           className="
-            text-blue-400
-          "
-
-        />
-
-
+flex
+h-12
+w-12
+items-center
+justify-center
+rounded-2xl
+bg-primary/10
+text-primary
+"
+        >
+          <Building2 size={26} />
+        </div>
 
         <div>
-
-
           <h1
             className="
-              text-2xl
-              font-bold
-              text-white
-            "
+text-3xl
+font-extrabold
+text-text
+"
           >
-
-            {
-              isEditMode
-                ?
-                "Edit Venue"
-                :
-                "Create Venue"
-            }
-
+            {isEditMode ? "Edit Venue" : "Create Venue"}
           </h1>
 
-
-
-
           <p
             className="
-              text-sm
-              text-gray-400
-            "
+text-sm
+text-text-muted
+"
           >
-
-            {
-              isEditMode
-                ?
-                "Update venue details"
-                :
-                "Add a new event location"
-            }
-
+            {isEditMode ? "Update venue details" : "Add new event location"}
           </p>
-
-
-
         </div>
-
-
       </div>
 
-
-
-
-
-
-
-
-
-      {/* Form */}
-
-
-
       <form
-
         onSubmit={handleSubmit}
-
         className="
-          space-y-5
-          rounded-3xl
-          border
-          border-white/10
-          bg-white/5
-          p-6
-          backdrop-blur-xl
-        "
-
+space-y-6
+rounded-3xl
+border
+border-border
+bg-surface/80
+p-6
+backdrop-blur-xl
+"
       >
-
-
-
-
-
-
         <Input
-
           icon={Building2}
-
           label="Venue Name"
-
           name="name"
-
           value={formData.name}
-
           onChange={handleChange}
-
           placeholder="Main Auditorium"
-
         />
 
-
-
-
-
-
-
         <Input
-
           icon={Building2}
-
           label="College Name"
-
           name="collegeName"
-
           value={formData.collegeName}
-
           onChange={handleChange}
-
           placeholder="ABC College"
-
         />
 
-
-
-
-
-
-
         <Input
-
           icon={MapPin}
-
           label="Address"
-
           name="address"
-
           value={formData.address}
-
           onChange={handleChange}
-
-          placeholder="Pune, Maharashtra"
-
+          placeholder="Pune Maharashtra"
         />
-
-
-
-
-
-
 
         <Input
-
           icon={Users}
-
           label="Capacity"
-
           name="capacity"
-
           type="number"
-
           value={formData.capacity}
-
           onChange={handleChange}
-
           placeholder="500"
-
         />
-
-
-
-
-
-
-
-
-
-        {/* Facilities */}
-
 
         <div>
-
-
           <label
-
             className="
-              mb-2
-              block
-              text-sm
-              text-gray-400
-            "
-
+mb-2
+block
+text-sm
+font-semibold
+text-text-muted
+"
           >
-
             Facilities
-
           </label>
 
-
-
-
           <input
-
-
             name="facilities"
-
-
             value={formData.facilities}
-
-
             onChange={handleChange}
-
-
             placeholder="Parking, AC, Projector"
-
-
             className="
-              w-full
-              rounded-xl
-              border
-              border-white/10
-              bg-black/20
-              px-4
-              py-3
-              text-white
-              outline-none
-              placeholder:text-gray-500
-              focus:border-blue-500
-            "
-
-
+w-full
+rounded-2xl
+border
+border-border
+bg-background
+px-4
+py-3
+text-sm
+text-text
+outline-none
+placeholder:text-text-muted
+focus:border-primary
+focus:ring-4
+focus:ring-primary/20
+"
           />
-
-
 
           <p
             className="
-              mt-2
-              text-xs
-              text-gray-500
-            "
+mt-2
+text-xs
+text-text-muted
+"
           >
-
             Separate facilities using commas
-
           </p>
-
-
         </div>
-
-
-
-
-
-
-
-
 
         <div
           className="
-            grid
-            gap-4
-            sm:grid-cols-2
-          "
+grid
+gap-5
+sm:grid-cols-2
+"
         >
-
-
-
           <Input
-
             label="Latitude"
-
             name="latitude"
-
             value={formData.latitude}
-
             onChange={handleChange}
-
             placeholder="18.5204"
-
           />
-
-
-
 
           <Input
-
             label="Longitude"
-
             name="longitude"
-
             value={formData.longitude}
-
             onChange={handleChange}
-
             placeholder="73.8567"
-
           />
-
-
-
         </div>
 
-
-
-
-
-
-
-
-
         <button
-
           disabled={loading}
-
           className="
-            flex
-            w-full
-            items-center
-            justify-center
-            gap-2
-            rounded-xl
-            bg-blue-600
-            py-3
-            font-semibold
-            text-white
-            hover:bg-blue-700
-            disabled:opacity-50
-          "
-
+flex
+w-full
+items-center
+justify-center
+gap-2
+rounded-2xl
+bg-primary
+py-3.5
+font-bold
+text-white
+shadow-lg
+shadow-primary/30
+transition
+hover:opacity-90
+disabled:opacity-50
+"
         >
-
-
           <Plus size={18} />
 
-
-
-          {
-            loading
-              ?
-              "Saving..."
-              :
-              isEditMode
-                ?
-                "Update Venue"
-                :
-                "Create Venue"
-          }
-
-
-
+          {loading ? "Saving..." : isEditMode ? "Update Venue" : "Create Venue"}
         </button>
-
-
-
-
-
       </form>
-
-
-
     </div>
-
   );
-
-
 };
 
-
-
-
-
-
-
-
-
-const Input = ({
-  icon: Icon,
-  label,
-  ...props
-}) => {
-
-
+const Input = ({ icon: Icon, label, ...props }) => {
   return (
-
     <div>
-
-
       <label
-
         className="
 mb-2
 block
 text-sm
-text-gray-400
+font-semibold
+text-text-muted
 "
-
       >
-
         {label}
-
       </label>
 
-
-
-
-      <div
-        className="
-relative
-"
-      >
-
-
-        {
-          Icon &&
-
+      <div className="relative">
+        {Icon && (
           <Icon
-
             size={18}
-
             className="
 absolute
 left-3
 top-3.5
-text-gray-500
+text-text-muted
 "
-
           />
-
-        }
-
-
-
-
+        )}
 
         <input
-
           {...props}
-
           className="
 w-full
-rounded-xl
+rounded-2xl
 border
-border-white/10
-bg-black/20
+border-border
+bg-background
 px-4
 py-3
 pl-10
-text-white
+text-sm
+text-text
 outline-none
-placeholder:text-gray-500
-focus:border-blue-500
+placeholder:text-text-muted
+focus:border-primary
+focus:ring-4
+focus:ring-primary/20
 "
-
         />
-
-
-
       </div>
-
-
     </div>
-
   );
-
-
 };
-
-
-
 
 export default CreateVenue;

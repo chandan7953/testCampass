@@ -1,105 +1,111 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Sun, Moon } from "lucide-react";
 import Logo from "./Logo";
+import { useTheme } from "../utils/ThemeContext";
+import Button from "./Button";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   const linkClass = ({ isActive }) =>
-    `relative py-2 text-sm font-semibold transition-all duration-200 ${
-      isActive ? "text-blue-400 font-bold" : "text-gray-400 hover:text-white"
+    `rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
+      isActive ? "bg-primary/10 text-primary" : "text-text-muted hover:bg-surface-secondary hover:text-text"
     }`;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0A0A0F]/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-surface/70 backdrop-blur-2xl">
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-6">
         <NavLink to="/" onClick={() => setIsOpen(false)}>
           <Logo />
         </NavLink>
 
-        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
           <NavLink to="/" className={linkClass}>
             Home
           </NavLink>
 
           <NavLink to="/about" className={linkClass}>
-            About Us
+            About
           </NavLink>
 
           <NavLink to="/contact" className={linkClass}>
             Contact
           </NavLink>
 
-          <div className="flex items-center gap-3">
+          <div className="ml-4 flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background transition-all hover:scale-105 hover:bg-surface"
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
             <button
               onClick={() => navigate("/login")}
-              className="rounded-2xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+              className="rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-semibold transition-all hover:border-primary hover:text-primary"
             >
               Sign In
             </button>
 
             <button
               onClick={() => navigate("/register")}
-              className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 transition hover:scale-105"
+              className="group flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
-              <span>Get Started</span>
-              <ArrowRight size={16} />
+              Get Started
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </button>
           </div>
         </nav>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="rounded-xl border border-white/10 bg-white/5 p-2 text-white md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-3 md:hidden">
+          <button
+            onClick={toggleTheme}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background"
+          >
+            {isOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
-      {isOpen && (
-        <div className="border-t border-white/10 bg-[#111116] px-6 py-5 md:hidden">
-          <nav className="flex flex-col gap-4">
-            <NavLink to="/" className={linkClass} onClick={() => setIsOpen(false)}>
-              Home
-            </NavLink>
+      <div
+        className={`overflow-hidden border-t border-border bg-surface transition-all duration-300 md:hidden ${isOpen ? "max-h-96 py-5" : "max-h-0 py-0"}`}
+      >
+        <nav className="flex flex-col gap-5 px-6">
+          <NavLink to="/" className={linkClass} onClick={() => setIsOpen(false)}>
+            Home
+          </NavLink>
 
-            <NavLink to="/about" className={linkClass} onClick={() => setIsOpen(false)}>
-              About Us
-            </NavLink>
+          <NavLink to="/about" className={linkClass} onClick={() => setIsOpen(false)}>
+            About
+          </NavLink>
 
-            <NavLink to="/contact" className={linkClass} onClick={() => setIsOpen(false)}>
-              Contact
-            </NavLink>
+          <NavLink to="/contact" className={linkClass} onClick={() => setIsOpen(false)}>
+            Contact
+          </NavLink>
 
-            <div className="mt-2 flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  navigate("/login");
-                  setIsOpen(false);
-                }}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-white"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  navigate("/register");
-                  setIsOpen(false);
-                }}
-                className="w-full rounded-2xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/30"
-              >
-                Get Started
-              </button>
-            </div>
-          </nav>
-        </div>
-      )}
+          <Button
+            onClick={() => navigate("/login")}
+            className="w-auto border border-border bg-surface text-text shadow-none px-5 py-2.5 hover:border-primary hover:bg-primary/5 hover:text-primary"
+          >
+            Sign In
+          </Button>
+
+          <Button onClick={() => navigate("/register")} className="group w-auto px-5 py-2.5">
+            <span>Get Started</span>
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+          </Button>
+        </nav>
+      </div>
     </header>
   );
 };

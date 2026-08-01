@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home as HomeIcon, Search, Calendar, Heart, User } from 'lucide-react-native';
+import { useTheme } from '../utils/ThemeContext';
 
 // Student Screens
 import Home from '../screens/student/Home';
@@ -12,19 +13,21 @@ import Profile from '../screens/shared/Profile';
 const Tab = createBottomTabNavigator();
 
 const StudentTabs = () => {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        headerStyle: { backgroundColor: '#0a0a0f', shadowColor: 'transparent', elevation: 0 },
-        headerTintColor: '#fff',
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: { backgroundColor: '#181824', borderTopWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' },
+        headerStyle: { backgroundColor: theme.colors.background, shadowColor: 'transparent', elevation: 0 },
+        headerTintColor: theme.colors.text,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarStyle: { backgroundColor: theme.colors.surface, borderTopWidth: 1, borderColor: theme.colors.border },
       }}
     >
       <Tab.Screen 
-        name="StudentHome" 
+        name="Home" 
         component={Home} 
         options={{
           title: 'Home',
@@ -32,7 +35,7 @@ const StudentTabs = () => {
         }} 
       />
       <Tab.Screen 
-        name="Browse" 
+        name="BrowseEvents" 
         component={BrowseEvents} 
         options={{
           title: 'Browse',
@@ -40,7 +43,7 @@ const StudentTabs = () => {
         }} 
       />
       <Tab.Screen 
-        name="Bookings" 
+        name="MyBookings" 
         component={MyBookings} 
         options={{
           title: 'Bookings',

@@ -17,7 +17,7 @@ const StatCard = ({
           <Text style={styles.title}>{title}</Text>
           
           {loading ? (
-            <ActivityIndicator style={styles.loader} size="small" color={color} />
+            <ActivityIndicator animating={true} style={styles.loader} size="small" color={color} />
           ) : (
             <Text style={styles.value}>{value}</Text>
           )}

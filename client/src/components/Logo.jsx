@@ -1,42 +1,15 @@
+import { Ticket } from "lucide-react";
+
 const Logo = () => {
   return (
-    <div className="flex items-center gap-3 cursor-pointer">
+    <div className="flex items-center gap-2 cursor-pointer group">
+      <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 transition-all duration-300 group-hover:bg-primary group-hover:shadow-lg group-hover:shadow-primary/30 group-hover:-rotate-12">
+        <Ticket className="text-primary h-5 w-5 transition-colors duration-300 group-hover:text-black" />
+      </div>
 
-      <svg width="30" height="30" viewBox="0 0 64 64">
-            <rect width="64" height="64" rx="16" fill="#3b82f6" />
-            <rect
-              x="8"
-              y="12"
-              width="48"
-              height="40"
-              rx="8"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-            />
-            <rect
-              x="16"
-              y="18"
-              width="32"
-              height="10"
-              rx="3"
-              fill="white"
-              opacity="0.4"
-            />
-            <rect
-              x="16"
-              y="36"
-              width="20"
-              height="7"
-              rx="2"
-              fill="white"
-              opacity="0.4"
-            />
-          </svg>
-
-          <h2 className="text-xl font-bold tracking-wide text-white">
-            CampusPass
-          </h2>
+      <h2 className="text-2xl font-black tracking-tight text-text">
+        Campus<span className="text-primary">Pass</span>
+      </h2>
     </div>
   );
 };

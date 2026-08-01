@@ -9,9 +9,12 @@ import PageHeader from '../../components/PageHeader';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import { formatDate, formatCurrency } from '../../utils/formatters';
+import { useTheme } from '../../utils/ThemeContext';
 
 const MyBookings = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
 
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
@@ -57,7 +60,6 @@ const MyBookings = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         <PageHeader
           breadcrumb="MY DIGITAL PASSES"
           title="My Bookings"
@@ -84,7 +86,7 @@ const MyBookings = () => {
         </ScrollView>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
         ) : filteredBookings.length === 0 ? (
           <View style={{ marginTop: 24 }}>
             <EmptyState
@@ -124,11 +126,11 @@ const MyBookings = () => {
 
                   <View style={styles.cardDetails}>
                     <View style={styles.detailRow}>
-                      <Calendar size={14} color="#60a5fa" />
+                      <Calendar size={14} color={theme.colors.primary} />
                       <Text style={styles.detailText}>{formatDate(event.startDate)}</Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <MapPin size={14} color="#60a5fa" />
+                      <MapPin size={14} color={theme.colors.primary} />
                       <Text style={styles.detailText} numberOfLines={1}>{event.venue?.name || "Campus Venue"}</Text>
                     </View>
                   </View>
@@ -144,7 +146,7 @@ const MyBookings = () => {
                         style={styles.actionBtnPrimary}
                         onPress={() => navigation.navigate("ETicket", { bookingId: booking._id || booking.id })}
                       >
-                        <QrCode size={14} color="#fff" />
+                        <QrCode size={14} color={theme.colors.surface} />
                         <Text style={styles.actionBtnPrimaryText}>View Pass QR</Text>
                       </TouchableOpacity>
                     ) : isPending ? (
@@ -165,7 +167,7 @@ const MyBookings = () => {
                         style={styles.actionBtnPrimary}
                         onPress={() => navigation.navigate("ETicket", { bookingId: booking._id || booking.id })}
                       >
-                        <QrCode size={14} color="#fff" />
+                        <QrCode size={14} color={theme.colors.surface} />
                         <Text style={styles.actionBtnPrimaryText}>View Pass</Text>
                       </TouchableOpacity>
                     )}
@@ -180,170 +182,170 @@ const MyBookings = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  tabsScroll: {
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    paddingBottom: 16,
-    marginBottom: 16,
-  },
-  tabBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: '#12121a',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  tabBtnActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#3b82f6',
-  },
-  tabText: {
-    color: '#9ca3af',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  tabTextActive: {
-    color: '#ffffff',
-  },
-  bookingsList: {
-    gap: 16,
-  },
-  bookingCard: {
-    backgroundColor: 'rgba(18, 18, 26, 0.9)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    padding: 20,
-    gap: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardHeaderLeft: {
-    flex: 1,
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  eventTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  seatBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  seatBadgeText: {
-    color: '#60a5fa',
-    fontSize: 10,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  cardDetails: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-    paddingVertical: 12,
-    gap: 8,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  detailText: {
-    color: '#d1d5db',
-    fontSize: 12,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  amountLabel: {
-    color: '#9ca3af',
-    fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  amountValue: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  actionBtnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
-    gap: 6,
-  },
-  actionBtnPrimaryText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  actionBtnSuccess: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#059669',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
-    gap: 6,
-  },
-  actionBtnSuccessText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  cancelledBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(244, 63, 94, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(244, 63, 94, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
-    gap: 6,
-  },
-  cancelledText: {
-    color: '#fb7185',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  browseBtn: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
-    marginTop: 16,
-  },
-  browseBtnText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  }
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    tabsScroll: {
+      gap: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      paddingBottom: 16,
+      marginBottom: 16,
+    },
+    tabBtn: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 16,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    tabBtnActive: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    tabText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    tabTextActive: {
+      color: theme.colors.surface,
+    },
+    bookingsList: {
+      gap: 16,
+    },
+    bookingCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: 20,
+      gap: 16,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    cardHeaderLeft: {
+      flex: 1,
+      alignItems: 'flex-start',
+      gap: 8,
+    },
+    eventTitle: {
+      color: theme.colors.text,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    seatBadge: {
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 0.2)',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    seatBadgeText: {
+      color: theme.colors.primary,
+      fontSize: 10,
+      fontWeight: 'bold',
+    },
+    cardDetails: {
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: theme.colors.border,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    detailText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+    },
+    cardFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    amountLabel: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      fontWeight: 'bold',
+      letterSpacing: 0.5,
+    },
+    amountValue: {
+      color: theme.colors.text,
+      fontSize: 16,
+      fontWeight: '900',
+      marginTop: 2,
+    },
+    actionBtnPrimary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 16,
+      gap: 6,
+    },
+    actionBtnPrimaryText: {
+      color: theme.colors.surface,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    actionBtnSuccess: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#059669',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 16,
+      gap: 6,
+    },
+    actionBtnSuccessText: {
+      color: '#ffffff',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    cancelledBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(244, 63, 94, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(244, 63, 94, 0.2)',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 16,
+      gap: 6,
+    },
+    cancelledText: {
+      color: '#fb7185',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    browseBtn: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 16,
+      marginTop: 16,
+    },
+    browseBtnText: {
+      color: theme.colors.surface,
+      fontWeight: 'bold',
+    },
+  });
 
 export default MyBookings;

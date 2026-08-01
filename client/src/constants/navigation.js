@@ -12,6 +12,7 @@ import {
   Tag,
   Bell,
   Building2,
+  BarChart2,
 } from "lucide-react";
 
 export const STUDENT_NAV_LINKS = [
@@ -47,6 +48,11 @@ export const ORGANIZER_NAV_LINKS = [
     label: "Dashboard",
     path: "/organizer/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Analytics",
+    path: "/organizer/analytics",
+    icon: BarChart2,
   },
   {
     label: "Manage Events",
@@ -85,6 +91,11 @@ export const ADMIN_NAV_LINKS = [
     label: "Dashboard",
     path: "/admin/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Analytics",
+    path: "/admin/analytics",
+    icon: BarChart2,
   },
   {
     label: "All Events",

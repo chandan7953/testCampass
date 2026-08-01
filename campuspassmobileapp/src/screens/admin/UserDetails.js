@@ -3,8 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, UserCog } from 'lucide-react-native';
-import { Picker } from '@react-native-picker/picker'; // You might need to install this if not available, but assuming it is for standard RN
-// Fallback if Picker isn't installed: we can use a simple custom modal or buttons for roles, but let's assume standard picker or replace with touchables for simplicity.
 
 import api from '../../api/axios';
 import PageHeader from '../../components/PageHeader';
@@ -117,7 +115,7 @@ const UserDetails = () => {
           <View style={styles.roleSelector}>
             {/* Custom role selector instead of Picker to avoid extra dependencies if not available */}
             <View style={styles.roleOptions}>
-              {['student', 'organizer', 'admin'].map((r) => (
+              {['student', 'organizer'].map((r) => (
                 <TouchableOpacity 
                   key={r}
                   style={[styles.roleOption, role === r && styles.roleOptionActive]}

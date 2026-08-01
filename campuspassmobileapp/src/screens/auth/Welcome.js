@@ -2,9 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LogIn, UserPlus } from 'lucide-react-native';
+import Logo from '../../components/Logo';
+import { useTheme } from '../../utils/ThemeContext';
 
 const Welcome = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
 
   return (
     <ImageBackground
@@ -16,10 +19,7 @@ const Welcome = () => {
       <View style={styles.overlay}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>CP</Text>
-            </View>
-            <Text style={styles.title}>CampusPass</Text>
+            <Logo size="large" />
             <Text style={styles.subtitle}>
               Your all-in-one platform for discovering, managing, and attending campus events.
             </Text>
@@ -27,11 +27,11 @@ const Welcome = () => {
 
           <View style={styles.actions}>
             <TouchableOpacity 
-              style={styles.loginBtn}
+              style={[styles.loginBtn, { backgroundColor: theme.colors.primary }]}
               onPress={() => navigation.navigate("Login")}
             >
-              <LogIn size={20} color="#fff" />
-              <Text style={styles.loginBtnText}>Log In to Account</Text>
+              <LogIn size={20} color={theme.colors.surface} />
+              <Text style={[styles.loginBtnText, { color: theme.colors.surface }]}>Log In to Account</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(10, 10, 15, 0.7)',
+    backgroundColor: 'rgba(9, 9, 11, 0.75)',
     justifyContent: 'flex-end',
   },
   content: {
@@ -66,49 +66,26 @@ const styles = StyleSheet.create({
     gap: 16,
     alignItems: 'center',
   },
-  logoContainer: {
-    width: 64,
-    height: 64,
-    backgroundColor: '#2563eb',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  logoText: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '900',
-    fontStyle: 'italic',
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 36,
-    fontWeight: '900',
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
   subtitle: {
     color: '#d1d5db',
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
+    marginTop: 8,
   },
   actions: {
-    gap: 16,
+    gap: 14,
     width: '100%',
   },
   loginBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2563eb',
     paddingVertical: 16,
     borderRadius: 16,
     gap: 12,
   },
   loginBtnText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -127,7 +104,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
 });
 
 export default Welcome;

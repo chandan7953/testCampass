@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Calendar, Ticket, ShieldCheck, ArrowRight, Star, Users } from "lucide-react";
+import { Sparkles, Calendar, Ticket, ShieldCheck, ArrowRight } from "lucide-react";
+
 import landingHero from "../../assets/landing-hero.png";
+import Button from "../../components/Button";
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -9,141 +11,155 @@ const Splash = () => {
     {
       icon: Calendar,
       title: "Discover Campus Events",
-      desc: "Browse workshops, hackathons, sports, and cultural fests happening across your college.",
-      color: "from-blue-500 to-cyan-500",
+      desc: "Browse workshops, hackathons, sports, cultural festivals, and seminars happening across your campus.",
     },
     {
       icon: Ticket,
-      title: "Instant Digital Passes",
-      desc: "Reserve seats in 1-click and receive your verified QR code E-Ticket pass instantly.",
-      color: "from-purple-500 to-pink-500",
+      title: "Instant QR Passes",
+      desc: "Reserve your seat in seconds and receive a secure digital QR pass instantly.",
     },
     {
       icon: ShieldCheck,
-      title: "Seamless Organizer Tools",
-      desc: "College chapters & admins can manage registrations, check-in attendees, and track revenue.",
-      color: "from-emerald-500 to-teal-500",
+      title: "Organizer Dashboard",
+      desc: "Manage registrations, verify attendees, and monitor your events from one place.",
     },
     {
       icon: Sparkles,
-      title: "Live Notifications",
-      desc: "Get immediate alerts on venue changes, schedule updates, and upcoming pass reminders.",
-      color: "from-amber-500 to-orange-500",
+      title: "Real-Time Updates",
+      desc: "Receive notifications about schedule changes, announcements, and reminders.",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-white">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-24 lg:pt-20 lg:pb-32">
-        {/* Background Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute top-1/3 right-10 -z-10 h-80 w-80 rounded-full bg-purple-600/15 blur-3xl" />
+    <div className="min-h-screen bg-background text-text">
+      <section className="relative overflow-hidden py-24 lg:py-32">
+        <div className="absolute left-1/2 top-24 -z-10 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
 
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2">
-          {/* Left Column */}
-          <div className="space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400 backdrop-blur-md">
-              <Sparkles size={14} />
-              <span>The Next-Gen Campus Pass Platform</span>
+        <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
+          <div className="animate-fade-in-up">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+              <Sparkles size={16} />
+              Campus Event Management Platform
             </div>
 
-            <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Discover. <br />
-              Connect. <br />
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
-                Experience Campus Life.
-              </span>
+            <h1 className="text-5xl font-extrabold leading-tight lg:text-6xl">
+              Discover,
+              <br />
+              Connect &
+              <br />
+              <span className="text-primary">Experience Campus Life</span>
             </h1>
 
-            <p className="max-w-xl text-base leading-relaxed text-gray-400 sm:text-lg">
-              Explore college events, secure your E-Ticket QR passes, and never miss out on campus tech talks, fests, or workshops.
+            <p className="mt-6 max-w-xl text-lg leading-8 text-text-muted">
+              CampusPass makes discovering events, booking tickets, generating QR passes, and managing registrations
+              simple for students and organizers.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+            <div className="mt-10 flex flex-wrap items-center gap-4">
               <button
                 onClick={() => navigate("/login")}
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-105"
+                className="group inline-flex items-center gap-3 rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0"
               >
-                <span>Explore Events</span>
-                <ArrowRight size={18} />
+                Explore Events
+                <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
               </button>
 
               <button
                 onClick={() => navigate("/register")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur-md transition hover:bg-white/10"
+                className="inline-flex items-center rounded-2xl border border-border bg-surface px-8 py-4 text-base font-semibold text-text shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-primary/5 hover:text-primary active:translate-y-0"
               >
                 Create Account
               </button>
             </div>
-
-            {/* Social Proof Stats */}
-            <div className="pt-6 flex items-center justify-center gap-8 lg:justify-start border-t border-white/5">
-              <div>
-                <p className="text-2xl font-black text-white">50+</p>
-                <p className="text-xs text-gray-400">Campus Events</p>
-              </div>
-              <div className="h-8 w-px bg-white/10" />
-              <div>
-                <p className="text-2xl font-black text-white">5,000+</p>
-                <p className="text-xs text-gray-400">Students Joined</p>
-              </div>
-              <div className="h-8 w-px bg-white/10" />
-              <div>
-                <p className="text-2xl font-black text-white">100%</p>
-                <p className="text-xs text-gray-400">Digital QR Passes</p>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column Banner */}
-          <div className="relative">
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] p-2 shadow-2xl backdrop-blur-2xl">
-              <img
-                src={landingHero}
-                alt="College Event Banner"
-                className="h-full w-full rounded-2xl object-cover"
-              />
+          <div className="animate-fade-in-up">
+            <div className="rounded-[2rem] border border-border bg-surface p-3 shadow-lg">
+              <img src={landingHero} alt="CampusPass" className="rounded-[1.5rem]" />
             </div>
           </div>
         </div>
       </section>
-
-      {/* Features Grid */}
-      <section className="border-t border-white/10 bg-[#0E0E14] py-20">
+      <section className="border-t border-border bg-surface-secondary/40 py-28">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center space-y-3 mb-16">
-            <p className="text-xs font-extrabold uppercase tracking-widest text-blue-400">Why CampusPass?</p>
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">Everything You Need for Campus Events</h2>
+          <div className="mx-auto mb-16 max-w-3xl text-center animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+              <Sparkles size={16} />
+              Why Choose CampusPass?
+            </div>
+
+            <h2 className="mt-6 text-4xl font-bold lg:text-5xl">
+              Everything You Need
+              <br />
+              To Manage Campus Events
+            </h2>
+
+            <p className="mt-5 text-lg leading-8 text-text-muted">
+              From discovering exciting events to seamless registrations and secure QR check-ins, CampusPass simplifies
+              the entire event experience for students and organizers.
+            </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((item, idx) => {
-              const Icon = item.icon;
+          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+
               return (
                 <div
-                  key={idx}
-                  className="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] p-6 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/40"
+                  key={index}
+                  className="group rounded-3xl border border-border bg-surface p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                 >
-                  <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg`}
-                  >
-                    <Icon size={26} />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-white">
+                    <Icon size={28} />
                   </div>
 
-                  <h3 className="mt-5 text-lg font-bold text-white">{item.title}</h3>
-                  <p className="mt-2 text-xs leading-relaxed text-gray-400">{item.desc}</p>
+                  <h3 className="mt-8 text-xl font-bold">{feature.title}</h3>
+
+                  <p className="mt-4 leading-7 text-text-muted">{feature.desc}</p>
                 </div>
               );
             })}
           </div>
+
+          <div className="relative mt-24 overflow-hidden rounded-[2rem] border border-border bg-surface p-10 text-center shadow-md sm:p-14">
+            <div className="absolute left-1/2 top-0 -z-0 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+
+            <div className="relative z-10 mx-auto max-w-3xl">
+              <h2 className="text-3xl font-extrabold tracking-tight text-text sm:text-4xl">
+                Ready to Join Your Next Campus Event?
+              </h2>
+
+              <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-text-muted sm:text-lg">
+                Create your free account today and discover hackathons, workshops, seminars, cultural festivals, sports
+                events, competitions, and much more happening on your campus.
+              </p>
+
+              <div className="mt-10 flex flex-wrap justify-center gap-4">
+                <button
+                  onClick={() => navigate("/register")}
+                  className="group inline-flex items-center gap-3 rounded-2xl bg-primary px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/30 active:translate-y-0"
+                >
+                  Get Started
+                  <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
+
+                <button
+                  onClick={() => navigate("/login")}
+                  className="inline-flex items-center rounded-2xl border border-border bg-background px-8 py-3.5 text-base font-semibold text-text transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-primary/5 hover:text-primary active:translate-y-0"
+                >
+                  Sign In
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-8 bg-[#0A0A0F]">
-        <div className="mx-auto max-w-7xl px-6 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} CampusPass. All rights reserved. Designed for student chapters and event organizers.
+      <footer className="border-t border-border bg-background py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 px-6 text-center text-sm text-text-muted md:flex-row">
+          <p>
+            © {new Date().getFullYear()} <span className="font-semibold text-text">CampusPass</span>. All rights
+            reserved.
+          </p>
         </div>
       </footer>
     </div>

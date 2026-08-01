@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, Navigation, ArrowLeft, Building2, Compass } from "lucide-react";
+import {
+  MapPin,
+  Navigation,
+  ArrowLeft,
+  Building2,
+  Compass,
+  ExternalLink,
+} from "lucide-react";
 import toast from "react-hot-toast";
-import api from "../../api/axios";
 
+import api from "../../api/axios";
 import PageHeader from "../../components/PageHeader";
 
 const EventMap = () => {
@@ -15,15 +22,16 @@ const EventMap = () => {
 
   useEffect(() => {
     fetchEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchEvent = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/events/${id}`);
-      setEvent(res.data.data);
+      const response = await api.get(`/events/${id}`);
+      setEvent(response.data.data);
     } catch (error) {
-      toast.error("Failed to load venue map");
+      toast.error("Failed to load venue location");
     } finally {
       setLoading(false);
     }
@@ -31,21 +39,52 @@ const EventMap = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-        <p className="text-sm font-semibold text-gray-400">Loading Venue Location...</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-sm text-text-muted">Loading Venue Location...</p>
       </div>
     );
   }
 
-  if (!event) return null;
+  if (!event) {
+    return null;
+  }
+
   const venue = event.venue || {};
+  const latitude = venue.latitude;
+  const longitude = venue.longitude;
+  const hasCoordinates = latitude && longitude;
+
+  const mapQuery = hasCoordinates
+    ? `${latitude},${longitude}`
+    : venue.address || venue.name || "Pune";
+  const googleMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+  const embedUrl = hasCoordinates
+    ? `https://maps.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
+    : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`;
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-5xl space-y-8">
+      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] px-4 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/10"
+        className="
+          flex
+          items-center
+          gap-2
+          rounded-2xl
+          border
+          border-border
+          bg-surface
+          px-4
+          py-2
+          text-xs
+          font-bold
+          text-text-muted
+          transition
+          hover:bg-surface-secondary
+          hover:text-text
+        "
       >
         <ArrowLeft size={16} />
         Back to Event
@@ -54,58 +93,104 @@ const EventMap = () => {
       <PageHeader
         breadcrumb="CAMPUS NAVIGATION"
         title="Venue Map & Directions"
-        subtitle={`Location guidance for ${event.title}`}
+        subtitle={`Find location for ${event.title}`}
       />
 
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* Simulated Map Visual Card */}
-        <div className="md:col-span-2 overflow-hidden rounded-3xl border border-white/10 bg-[#12121A] p-6 shadow-2xl relative space-y-6">
-          <div className="relative h-72 w-full overflow-hidden rounded-2xl bg-[#181824] border border-white/5 flex flex-col items-center justify-center">
-            {/* Map Grid Pattern background */}
-            <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
-
-            <div className="relative z-10 flex flex-col items-center text-center space-y-3 p-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/30 animate-bounce">
-                <MapPin size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-white">{venue.name || "Main Campus Auditorium"}</h3>
-              <p className="text-xs text-gray-400 max-w-md">{venue.address || "Building B, Central Quadrangle, Pune University Campus"}</p>
-            </div>
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Map */}
+        <div className="space-y-5 rounded-3xl border border-border bg-surface/80 p-5 shadow-xl backdrop-blur-xl lg:col-span-2">
+          <div className="overflow-hidden rounded-2xl border border-border">
+            <iframe
+              title="Event Venue Map"
+              src={embedUrl}
+              width="100%"
+              height="420"
+              loading="lazy"
+              className="border-0"
+              allowFullScreen
+            />
           </div>
 
           <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(venue.address || venue.name || "Pune")}`}
+            href={googleMapUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 transition hover:scale-105"
+            className="
+              flex
+              items-center
+              justify-center
+              gap-2
+              rounded-2xl
+              bg-primary
+              py-3.5
+              text-sm
+              font-bold
+              text-white
+              shadow-lg
+              shadow-primary/30
+              transition
+              hover:bg-primary-hover
+              hover:scale-[1.02]
+            "
           >
-            <Navigation size={16} />
-            <span>Open in Google Maps</span>
+            <Navigation size={18} />
+            Open Google Maps Directions
+            <ExternalLink size={15} />
           </a>
         </div>
 
-        {/* Venue Info Details */}
-        <div className="rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl space-y-6">
-          <h3 className="text-lg font-bold text-white border-b border-white/10 pb-3 flex items-center gap-2">
-            <Building2 size={18} className="text-blue-400" />
-            <span>Venue Details</span>
+        {/* Venue Details */}
+        <div className="space-y-6 rounded-3xl border border-border bg-surface/80 p-6 backdrop-blur-xl">
+          <h3 className="flex items-center gap-2 border-b border-border pb-3 text-lg font-bold text-text">
+            <Building2 size={18} className="text-primary" />
+            Venue Details
           </h3>
 
-          <div className="space-y-4 text-xs text-gray-300">
+          <div className="space-y-5 text-sm">
             <div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Venue Name</p>
-              <p className="font-bold text-white text-sm">{venue.name || "Main Auditorium"}</p>
+              <p className="text-xs uppercase text-text-muted">Venue Name</p>
+              <p className="font-bold text-text">
+                {venue.name || "Campus Auditorium"}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <MapPin size={18} className="mt-0.5 text-primary" />
+              <div>
+                <p className="text-xs uppercase text-text-muted">Address</p>
+                <p className="text-text">
+                  {venue.address || "Address not available"}
+                </p>
+              </div>
             </div>
 
             <div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Capacity</p>
-              <p className="font-bold text-white">{venue.capacity || event.capacity || 500} People</p>
+              <p className="text-xs uppercase text-text-muted">Capacity</p>
+              <p className="font-bold text-text">
+                {venue.capacity || event.capacity || 0} People
+              </p>
             </div>
 
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase font-semibold">Landmark</p>
-              <p className="font-bold text-white">{venue.landmark || "Near University Library"}</p>
-            </div>
+            {venue.landmark && (
+              <div>
+                <p className="text-xs uppercase text-text-muted">Landmark</p>
+                <p className="font-bold text-text">{venue.landmark}</p>
+              </div>
+            )}
+
+            {hasCoordinates && (
+              <div className="rounded-2xl bg-primary/10 p-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Compass size={18} />
+                  <span className="text-xs font-bold">GPS Location</span>
+                </div>
+                <p className="mt-2 text-xs text-text-muted">
+                  Latitude: {latitude}
+                  <br />
+                  Longitude: {longitude}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -132,24 +132,35 @@ const CreateEvent = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.startDate) {
-      Alert.alert("Error", "Please fill in event title and start date");
+    if (!formData.title?.trim()) {
+      Alert.alert("Error", "Please enter an event title");
+      return;
+    }
+    if (!formData.category) {
+      Alert.alert("Error", "Please select an event category");
+      return;
+    }
+    if (!formData.venue) {
+      Alert.alert("Error", "Please select a campus venue");
+      return;
+    }
+    if (!formData.startDate) {
+      Alert.alert("Error", "Please select a start date and time");
       return;
     }
 
     try {
       setLoading(true);
       
-      // Sending JSON instead of FormData as there's no poster image upload in mobile App
       const payload = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description || formData.title.trim(),
         category: formData.category,
         venue: formData.venue,
-        price: Number(formData.price),
+        price: Number(formData.price) || 0,
         startDate: formData.startDate,
-        endDate: formData.endDate,
-        capacity: Number(formData.capacity),
+        endDate: formData.endDate || formData.startDate,
+        capacity: Number(formData.capacity) || 100,
       };
 
       if (isEdit) {
@@ -312,7 +323,7 @@ const CreateEvent = () => {
   );
 };
 
-const styles = StyleSheet.create({
+var styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0f',

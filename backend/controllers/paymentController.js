@@ -6,6 +6,7 @@ const razorpay = require("../configs/razorpay");
 const Payment = require("../models/Payment");
 const Booking = require("../models/Booking");
 const Event = require("../models/Event");
+const Commission = require("../models/Commission");
 
 const apiResponse = require("../utils/apiResponse");
 const ApiError = require("../utils/ApiError");
@@ -127,6 +128,25 @@ const verifyPayment = async (req, res, next) => {
     if (event) {
       event.bookedSeats += booking.quantity;
       await event.save();
+    }
+
+    // Auto-create Commission record (20% platform, 80% organizer)
+    if (event && booking.totalAmount > 0) {
+      const commissionPercentage = 20;
+      const commissionAmount = (booking.totalAmount * commissionPercentage) / 100;
+      const organizerAmount = booking.totalAmount - commissionAmount;
+
+      await Commission.create({
+        bookingId: booking._id,
+        eventId: booking.eventId,
+        organizerId: event.organizer,
+        paymentId: payment._id,
+        totalAmount: booking.totalAmount,
+        commissionPercentage,
+        commissionAmount,
+        organizerAmount,
+        status: "pending",
+      });
     }
 
     res.status(200).json(

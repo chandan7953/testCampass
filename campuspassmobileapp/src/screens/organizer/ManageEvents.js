@@ -126,7 +126,7 @@ const ManageEvents = () => {
 
       <View style={styles.eventsGrid}>
         {loading && !refreshing ? (
-          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 20 }} />
+          <ActivityIndicator animating={true} size="large" color="#3b82f6" style={{ marginTop: 20 }} />
         ) : filteredEvents.length === 0 ? (
           <EmptyState
             title="No Events Found"

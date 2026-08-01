@@ -1,24 +1,19 @@
-const InfoCard = ({
-  icon: Icon,
-  title,
-  value,
-  iconColor = "text-blue-400",
-}) => {
-
+const InfoCard = ({ icon: Icon, title, value, iconColor = "text-primary" }) => {
   return (
     <div
       className="
         rounded-2xl
         border
-        border-white/10
-        bg-white/5
+        border-border
+        bg-surface/70
         p-5
         backdrop-blur-xl
+        transition
+        hover:bg-surface
       "
     >
-
       <div className="flex items-center gap-4">
-
+        {/* Icon Box */}
         <div
           className="
             flex
@@ -27,33 +22,38 @@ const InfoCard = ({
             items-center
             justify-center
             rounded-xl
-            bg-white/5
+            bg-primary/10
           "
         >
-          <Icon
-            size={22}
-            className={iconColor}
-          />
+          <Icon size={22} className={iconColor} />
         </div>
 
-
-        <div>
-
-          <p className="text-sm text-gray-500">
+        {/* Content */}
+        <div className="min-w-0">
+          <p
+            className="
+              text-sm
+              text-text-muted
+            "
+          >
             {title}
           </p>
 
-          <p className="mt-1 text-sm font-medium text-white break-all">
+          <p
+            className="
+              mt-1
+              text-sm
+              font-semibold
+              text-text
+              break-all
+            "
+          >
             {value}
           </p>
-
         </div>
-
       </div>
-
     </div>
   );
 };
-
 
 export default InfoCard;

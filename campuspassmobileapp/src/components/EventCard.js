@@ -4,10 +4,12 @@ import { Calendar, MapPin, Users, Eye, Pencil, Trash2, Send, Ban, Tag } from 'lu
 import { useSelector } from 'react-redux';
 import StatusBadge from './StatusBadge';
 import { formatDate, formatCurrency } from '../utils/formatters';
+import { useTheme } from '../utils/ThemeContext';
 
 const EventCard = ({
   event,
   showActions = false,
+  compact = false,
   onView,
   onEdit,
   onPublish,
@@ -17,6 +19,8 @@ const EventCard = ({
 }) => {
   const user = useSelector((state) => state.auth.user);
   const role = user?.role || 'user';
+  const { theme } = useTheme();
+  const styles = getStyles(theme, compact);
 
   if (!event) return null;
 
@@ -29,62 +33,65 @@ const EventCard = ({
         />
         <View style={styles.overlay} />
         
-        <View style={styles.categoryBadge}>
-          <Tag size={12} color="#60a5fa" />
-          <Text style={styles.categoryText}>{event.category?.name || "Event"}</Text>
-        </View>
+        {!compact && (
+          <View style={styles.categoryBadge}>
+            <Tag size={12} color={theme.colors.surface} />
+            <Text style={styles.categoryText}>{event.category?.name || "Event"}</Text>
+          </View>
+        )}
 
-        {event.status && (
+        {event.status && !compact && (
           <View style={styles.statusBadge}>
             <StatusBadge status={event.status} />
           </View>
         )}
 
-        <View style={styles.priceBadge}>
-          <Text style={styles.priceText}>{formatCurrency(event.price)}</Text>
-        </View>
+        {!compact && (
+          <View style={styles.priceBadge}>
+            <Text style={styles.priceText}>{formatCurrency(event.price)}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
-        <Text style={styles.description} numberOfLines={2}>
-          {event.description || "Join us for an exciting campus event filled with networking, learning, and fun!"}
-        </Text>
+        <Text style={styles.title} numberOfLines={compact ? 1 : 2}>{event.title}</Text>
+        
+        {!compact && (
+          <Text style={styles.description} numberOfLines={2}>
+            {event.description || "Join us for an exciting campus event!"}
+          </Text>
+        )}
 
-        <View style={styles.infoSection}>
-          <View style={styles.infoRow}>
-            <Calendar size={14} color="#60a5fa" />
-            <Text style={styles.infoText}>{formatDate(event.startDate)}</Text>
+        <View style={styles.footerRow}>
+          <View style={styles.dateContainer}>
+            <Calendar size={14} color={theme.colors.textMuted} />
+            <Text style={styles.dateText}>{formatDate(event.startDate)}</Text>
           </View>
-
-          <View style={styles.infoRow}>
-            <MapPin size={14} color="#60a5fa" />
-            <Text style={styles.infoText} numberOfLines={1}>{event.venue?.name || "Campus Venue TBD"}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Users size={14} color="#60a5fa" />
-            <Text style={styles.infoText}>
-              <Text style={styles.boldText}>
-                {event.availableSeats !== undefined 
-                  ? (event.capacity || 100) - event.availableSeats 
-                  : (event.bookedSeats || 0)}
-              </Text>
-              {" / "}{event.capacity || 100} seats reserved
-            </Text>
-          </View>
+          
+          {(!showActions && !onRemoveFavorite) && (
+            <TouchableOpacity style={styles.joinBtn} onPress={onView}>
+              <Text style={styles.joinBtnText}>Join</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {!compact && !showActions && (
+           <View style={styles.infoRow}>
+             <MapPin size={14} color={theme.colors.textMuted} />
+             <Text style={styles.infoText} numberOfLines={1}>{event.venue?.name || "Campus Venue TBD"}</Text>
+           </View>
+        )}
 
         {showActions ? (
           <View style={styles.actionsGrid}>
             <TouchableOpacity style={styles.actionBtn} onPress={onView}>
-              <Eye size={14} color="#e5e7eb" />
+              <Eye size={14} color={theme.colors.text} />
               <Text style={styles.actionText}>View</Text>
             </TouchableOpacity>
 
             {role === "organizer" && (
               <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
-                <Pencil size={14} color="#e5e7eb" />
+                <Pencil size={14} color={theme.colors.text} />
                 <Text style={styles.actionText}>Edit</Text>
               </TouchableOpacity>
             )}
@@ -110,42 +117,37 @@ const EventCard = ({
               </TouchableOpacity>
             )}
           </View>
-        ) : (
+        ) : onRemoveFavorite ? (
           <View style={styles.userActions}>
             <TouchableOpacity style={styles.primaryBtn} onPress={onView}>
-              <Eye size={14} color="#fff" />
-              <Text style={styles.primaryBtnText}>Explore Event Details</Text>
+              <Eye size={14} color={theme.colors.background} />
+              <Text style={styles.primaryBtnText}>Explore Details</Text>
             </TouchableOpacity>
             
-            {onRemoveFavorite && (
-              <TouchableOpacity 
-                style={styles.favBtn} 
-                onPress={() => onRemoveFavorite()}
-              >
-                <Trash2 size={16} color="#fb7185" />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity style={styles.favBtn} onPress={() => onRemoveFavorite()}>
+              <Trash2 size={16} color="#fb7185" />
+            </TouchableOpacity>
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme, compact) => StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(18, 18, 26, 0.8)',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     overflow: 'hidden',
-    marginVertical: 12,
+    marginVertical: compact ? 0 : 12,
   },
   imageContainer: {
-    height: 200,
+    height: compact ? 120 : 200,
     width: '100%',
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
   },
   image: {
     width: '100%',
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   categoryBadge: {
     position: 'absolute',
@@ -161,15 +163,13 @@ const styles = StyleSheet.create({
     top: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   categoryText: {
-    color: '#ffffff',
+    color: theme.colors.background,
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,
@@ -183,51 +183,65 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 12,
-    backgroundColor: 'rgba(37, 99, 235, 0.9)',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   priceText: {
-    color: '#ffffff',
+    color: theme.colors.background,
     fontSize: 12,
     fontWeight: '900',
   },
   content: {
-    padding: 20,
+    padding: compact ? 12 : 20,
   },
   title: {
-    fontSize: 18,
+    fontSize: compact ? 14 : 18,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: theme.colors.text,
   },
   description: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: theme.colors.textMuted,
     marginTop: 4,
     lineHeight: 18,
   },
-  infoSection: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: compact ? 8 : 16,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: compact ? 10 : 12,
+    color: theme.colors.textMuted,
+    marginLeft: 6,
+  },
+  joinBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  joinBtnText: {
+    color: theme.mode === 'dark' ? '#0F0F13' : '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginTop: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#d1d5db',
+    color: theme.colors.textMuted,
     marginLeft: 8,
-  },
-  boldText: {
-    fontWeight: 'bold',
-    color: '#ffffff',
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -235,23 +249,23 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.05)',
+    borderTopColor: theme.colors.border,
     gap: 8,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: theme.colors.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     paddingVertical: 8,
     paddingHorizontal: 12,
     flex: 1,
   },
   actionText: {
-    color: '#e5e7eb',
+    color: theme.colors.text,
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
@@ -298,12 +312,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(37, 99, 235, 0.9)',
+    backgroundColor: theme.colors.primary,
     borderRadius: 16,
     paddingVertical: 12,
   },
   primaryBtnText: {
-    color: '#ffffff',
+    color: theme.colors.background,
     fontSize: 12,
     fontWeight: 'bold',
     marginLeft: 8,

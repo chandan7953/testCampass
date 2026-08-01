@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Image, Calendar, MapPin, Tag, Users, IndianRupee, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  Image as ImageIcon,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../../api/axios";
@@ -11,12 +17,15 @@ const CreateEvent = () => {
   const { eventId } = useParams();
   const isEdit = Boolean(eventId);
 
+  const posterInputRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [venues, setVenues] = useState([]);
   const [poster, setPoster] = useState(null);
   const [preview, setPreview] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -31,14 +40,36 @@ const CreateEvent = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
     await fetchCategories();
     await fetchVenues();
+
     if (isEdit) {
       await fetchEvent();
     }
+  };
+
+  const getImageUrl = (posterData) => {
+    if (!posterData) return "";
+    if (typeof posterData === "string") {
+      if (
+        posterData.startsWith("http://") ||
+        posterData.startsWith("https://") ||
+        posterData.startsWith("blob:")
+      ) {
+        return posterData;
+      }
+      return `${api.defaults.baseURL}/${posterData.replace(/^\//, "")}`;
+    }
+    if (typeof posterData === "object") {
+      if (posterData.url) return getImageUrl(posterData.url);
+      if (posterData.secure_url) return posterData.secure_url;
+      if (posterData.path) return getImageUrl(posterData.path);
+    }
+    return "";
   };
 
   const fetchCategories = async () => {
@@ -62,6 +93,7 @@ const CreateEvent = () => {
   const fetchEvent = async () => {
     try {
       setPageLoading(true);
+
       const res = await api.get(`/events/${eventId}`);
       const event = res.data.data;
 
@@ -76,9 +108,15 @@ const CreateEvent = () => {
         capacity: event.capacity || "100",
       });
 
-      if (event.poster) setPreview(event.poster);
+      if (event.poster) {
+        const formattedUrl = getImageUrl(event.poster);
+        setPreview(formattedUrl);
+        // Reset poster state since this is a URL, not a File object
+        setPoster(null);
+      }
     } catch (error) {
       toast.error("Failed to load event details");
+      navigate("/organizer/events");
     } finally {
       setPageLoading(false);
     }
@@ -91,34 +129,106 @@ const CreateEvent = () => {
     });
   };
 
-  const handlePosterChange = (e) => {
-    const file = e.target.files[0];
+  const processPosterFile = (file) => {
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (PNG, JPG, WEBP)");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Poster image size must be less than 5MB");
+      return;
+    }
+
     setPoster(file);
-    setPreview(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+  };
+
+  const handlePosterChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processPosterFile(file);
+    }
+    e.target.value = "";
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      processPosterFile(file);
+    }
+  };
+
+  const handleRemovePoster = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPoster(null);
+    setPreview("");
+
+    // Reset the file input
+    if (posterInputRef.current) {
+      posterInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.startDate) {
-      toast.error("Please fill in event title and start date");
+    if (!formData.title?.trim()) {
+      toast.error("Please enter an event title");
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error("Please select an event category");
+      return;
+    }
+
+    if (!formData.venue) {
+      toast.error("Please select a campus venue");
+      return;
+    }
+
+    if (!formData.startDate) {
+      toast.error("Please select a start date and time");
       return;
     }
 
     try {
       setLoading(true);
+
       const data = new FormData();
-      data.append("title", formData.title);
-      data.append("description", formData.description);
+
+      data.append("title", formData.title.trim());
+      data.append("description", formData.description || formData.title);
       data.append("category", formData.category);
       data.append("venue", formData.venue);
-      data.append("price", formData.price);
+      data.append("price", formData.price || "0");
       data.append("startDate", formData.startDate);
-      data.append("endDate", formData.endDate);
-      data.append("capacity", formData.capacity);
+      data.append("endDate", formData.endDate || formData.startDate);
+      data.append("capacity", formData.capacity || "100");
 
-      if (poster) {
+      // Only append poster if it's a File object (new upload)
+      if (poster && poster instanceof File) {
         data.append("poster", poster);
       }
 
@@ -138,99 +248,415 @@ const CreateEvent = () => {
     }
   };
 
+  // Clean up object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   if (pageLoading) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-        <p className="text-sm font-semibold text-gray-400">Loading Event Configuration...</p>
+      <div
+        className="
+          flex min-h-[400px]
+          flex-col items-center
+          justify-center gap-4
+        "
+      >
+        <div
+          className="
+            h-10 w-10
+            animate-spin
+            rounded-full
+            border-4
+            border-primary
+            border-t-transparent
+          "
+        />
+
+        <p
+          className="
+            text-sm
+            font-semibold
+            text-text-muted
+          "
+        >
+          Loading Event Configuration...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-5xl space-y-8">
+      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] px-4 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/10"
+        className="
+          inline-flex
+          items-center
+          gap-2
+          rounded-2xl
+          border
+          border-border
+          bg-surface
+          px-4
+          py-2
+          text-xs
+          font-bold
+          text-text-muted
+          transition
+          hover:bg-surface-secondary
+        "
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={15} />
         Back
       </button>
 
       <PageHeader
         breadcrumb="EVENT MANAGEMENT"
-        title={isEdit ? "Edit Event" : "Host New Campus Event"}
+        title={isEdit ? "Edit Event" : "Create New Event"}
         subtitle={
           isEdit
-            ? "Update event details, ticket price, dates, or capacity."
-            : "Fill in the details below to list your fest, hackathon, or workshop."
+            ? "Update your event information, pricing, schedule and capacity."
+            : "Create and publish a new campus event for students."
         }
       />
 
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-white/10 bg-[#12121A]/80 p-6 backdrop-blur-xl md:p-8">
-        {/* Poster Upload Box */}
+      <form
+        onSubmit={handleSubmit}
+        className="
+          space-y-7
+          rounded-3xl
+          border
+          border-border
+          bg-surface/80
+          p-6
+          backdrop-blur-xl
+          md:p-8
+        "
+      >
+        {/* Poster Upload */}
         <div>
-          <label className="mb-2 block text-xs font-semibold text-gray-300 uppercase">Event Poster Banner</label>
-          <input id="poster" type="file" accept="image/*" onChange={handlePosterChange} className="hidden" />
-
           <label
-            htmlFor="poster"
-            className="group relative flex h-64 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-white/15 bg-[#181824] transition hover:border-blue-500/50"
+            className="
+              mb-3
+              block
+              text-xs
+              font-bold
+              uppercase
+              tracking-wider
+              text-text-muted
+            "
           >
-            {preview ? (
-              <img src={preview} alt="Poster preview" className="h-full w-full object-cover transition group-hover:scale-105" />
-            ) : (
-              <div className="text-center space-y-2 p-6">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <Image size={28} />
-                </div>
-                <p className="text-sm font-bold text-white">Click to Upload Poster</p>
-                <p className="text-xs text-gray-400">PNG, JPG or WEBP up to 5MB</p>
-              </div>
-            )}
+            Event Poster
           </label>
+
+          <input
+            ref={posterInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePosterChange}
+            className="hidden"
+          />
+
+          {preview ? (
+            <div
+              className="
+                flex
+                flex-col
+                items-center
+                justify-center
+                rounded-3xl
+                border-2
+                border-dashed
+                border-primary/30
+                bg-surface-secondary
+                p-6
+              "
+            >
+              <div
+                className="
+                  relative
+                  h-72
+                  w-full
+                  max-w-md
+                  overflow-hidden
+                  rounded-2xl
+                  shadow-2xl
+                  transition
+                  duration-300
+                  group-hover:scale-105
+                "
+              >
+                <img
+                  src={preview}
+                  alt="Event Poster Preview"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <p
+                className="
+                  mt-3
+                  max-w-xs
+                  truncate
+                  font-mono
+                  text-xs
+                  text-text-muted
+                "
+              >
+                {poster && poster instanceof File
+                  ? poster.name
+                  : "Current Event Poster"}
+              </p>
+
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => posterInputRef.current?.click()}
+                  className="
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    rounded-2xl
+                    border
+                    border-border
+                    bg-surface
+                    px-5
+                    py-2.5
+                    text-xs
+                    font-bold
+                    text-text-muted
+                    transition
+                    hover:bg-surface-secondary
+                  "
+                >
+                  <Upload size={14} />
+                  Change Poster
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRemovePoster}
+                  className="
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    rounded-2xl
+                    border
+                    border-danger/20
+                    bg-danger/10
+                    px-5
+                    py-2.5
+                    text-xs
+                    font-bold
+                    text-danger
+                    transition
+                    hover:bg-danger/20
+                  "
+                >
+                  <Trash2 size={14} />
+                  Remove Poster
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => posterInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`
+                flex
+                h-72
+                cursor-pointer
+                items-center
+                justify-center
+                overflow-hidden
+                rounded-3xl
+                border-2
+                border-dashed
+                transition
+                ${
+                  isDragging
+                    ? `
+                      border-primary
+                      bg-primary/10
+                    `
+                    : `
+                      border-border
+                      bg-surface-secondary
+                      hover:border-primary/50
+                    `
+                }
+              `}
+            >
+              <div className="pointer-events-none space-y-3 text-center">
+                <div
+                  className="
+                    mx-auto
+                    flex
+                    h-16
+                    w-16
+                    items-center
+                    justify-center
+                    rounded-2xl
+                    border
+                    border-primary/20
+                    bg-primary/10
+                    text-primary
+                  "
+                >
+                  <ImageIcon size={30} />
+                </div>
+
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    text-text
+                  "
+                >
+                  Click or drag poster image to upload
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    text-text-muted
+                  "
+                >
+                  PNG, JPG, WEBP up to 5MB
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Title */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Event Title *</label>
+          <label
+            className="
+              mb-2
+              block
+              text-xs
+              font-bold
+              uppercase
+              text-text-muted
+            "
+          >
+            Event Title *
+          </label>
+
           <input
             type="text"
-            required
             name="title"
+            required
             value={formData.title}
             onChange={handleChange}
-            placeholder="e.g. Annual Hackathon 2026"
-            className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500"
+            placeholder="Annual Hackathon 2026"
+            className="
+              w-full
+              rounded-2xl
+              border
+              border-border
+              bg-surface-secondary
+              px-5
+              py-3.5
+              text-sm
+              text-text
+              placeholder:text-text-muted
+              outline-none
+              focus:border-primary
+            "
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Description</label>
+          <label
+            className="
+              mb-2
+              block
+              text-xs
+              font-bold
+              uppercase
+              text-text-muted
+            "
+          >
+            Description
+          </label>
+
           <textarea
-            rows={4}
+            rows={5}
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Describe what students will learn or experience..."
-            className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500"
+            placeholder="Describe your event..."
+            className="
+              w-full
+              resize-none
+              rounded-2xl
+              border
+              border-border
+              bg-surface-secondary
+              px-5
+              py-4
+              text-sm
+              text-text
+              placeholder:text-text-muted
+              outline-none
+              focus:border-primary
+            "
           />
         </div>
 
-        {/* Category & Venue Dropdowns */}
+        {/* Category & Venue */}
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Category</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              Category
+            </label>
+
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                outline-none
+                focus:border-primary
+              "
             >
               <option value="">Select Category</option>
+
               {categories.map((cat) => (
-                <option key={cat._id || cat.id} value={cat._id || cat.id}>
+                <option
+                  key={cat._id || cat.id}
+                  value={cat._id || cat.id}
+                  className="bg-surface-secondary"
+                >
                   {cat.name}
                 </option>
               ))}
@@ -238,45 +664,122 @@ const CreateEvent = () => {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Campus Venue</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              Campus Venue
+            </label>
+
             <select
               name="venue"
               value={formData.venue}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                outline-none
+                focus:border-primary
+              "
             >
               <option value="">Select Venue</option>
-              {venues.map((vn) => (
-                <option key={vn._id || vn.id} value={vn._id || vn.id}>
-                  {vn.name}
+
+              {venues.map((venue) => (
+                <option
+                  key={venue._id || venue.id}
+                  value={venue._id || venue.id}
+                  className="bg-surface-secondary"
+                >
+                  {venue.name}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Date & Time Selectors */}
+        {/* Date Section */}
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Start Date & Time *</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              Start Date & Time *
+            </label>
+
             <input
               type="datetime-local"
               required
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                outline-none
+                focus:border-primary
+              "
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">End Date & Time</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              End Date & Time
+            </label>
+
             <input
               type="datetime-local"
               name="endDate"
               value={formData.endDate}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                outline-none
+                focus:border-primary
+              "
             />
           </div>
         </div>
@@ -284,38 +787,111 @@ const CreateEvent = () => {
         {/* Capacity & Price */}
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Capacity (Max Seats)</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              Maximum Seats
+            </label>
+
             <input
               type="number"
               name="capacity"
               value={formData.capacity}
               onChange={handleChange}
               placeholder="100"
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                placeholder:text-text-muted
+                outline-none
+                focus:border-primary
+              "
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-gray-300 uppercase">Ticket Price (₹)</label>
+            <label
+              className="
+                mb-2
+                block
+                text-xs
+                font-bold
+                uppercase
+                text-text-muted
+              "
+            >
+              Ticket Price (₹)
+            </label>
+
             <input
               type="number"
               name="price"
               value={formData.price}
               onChange={handleChange}
               placeholder="0 for Free"
-              className="w-full rounded-2xl border border-white/10 bg-[#181824] px-4 py-3.5 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500"
+              className="
+                w-full
+                rounded-2xl
+                border
+                border-border
+                bg-surface-secondary
+                px-5
+                py-3.5
+                text-sm
+                text-text
+                placeholder:text-text-muted
+                outline-none
+                focus:border-primary
+              "
             />
           </div>
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-4 text-sm font-bold text-white shadow-xl shadow-blue-600/30 transition hover:scale-[1.01] disabled:opacity-50"
+          className="
+            flex
+            w-full
+            items-center
+            justify-center
+            gap-2
+            rounded-2xl
+            bg-primary
+            py-4
+            text-sm
+            font-bold
+            text-white
+            shadow-lg
+            shadow-primary/30
+            transition
+            hover:bg-primary-hover
+            hover:scale-[1.02]
+            disabled:opacity-50
+          "
         >
           <Save size={18} />
-          <span>{loading ? "Saving Event..." : isEdit ? "Update Event" : "Create & List Event"}</span>
+
+          {loading
+            ? "Saving Event..."
+            : isEdit
+              ? "Update Event"
+              : "Create Event"}
         </button>
       </form>
     </div>

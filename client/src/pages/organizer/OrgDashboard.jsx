@@ -1,8 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, PlusCircle, Users, IndianRupee, Ticket, ArrowRight, ScanLine, CloudCog } from "lucide-react";
-import api from "../../api/axios";
+import {
+  ClipboardList,
+  PlusCircle,
+  Users,
+  IndianRupee,
+  Ticket,
+  ArrowRight,
+  ScanLine,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
+import api from "../../api/axios";
 import PageHeader from "../../components/PageHeader";
 import StatCard from "../../components/StatCard";
 import EventCard from "../../components/EventCard";
@@ -20,25 +29,39 @@ const OrgDashboard = () => {
     totalRevenue: 0,
   });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const [statsRes, eventsRes] = await Promise.all([
+
+      const [statsResponse, eventsResponse] = await Promise.all([
         api.get("/organizer/dashboard"),
-        api.get("/events/organizer/my-events")
+        api.get("/events/organizer/my-events"),
       ]);
-      setStats(statsRes.data.data);
-      setEvents(eventsRes.data.data || []);
+
+      setStats(
+        statsResponse.data?.data || {
+          totalEvents: 0,
+          totalBookings: 0,
+          totalRevenue: 0,
+        },
+      );
+
+      setEvents(
+        Array.isArray(eventsResponse.data?.data)
+          ? eventsResponse.data.data
+          : [],
+      );
     } catch (error) {
-      console.error("Error fetching organizer dashboard:", error);
+      console.error("Organizer Dashboard Error:", error);
+      toast.error(error.response?.data?.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
     <div className="space-y-8">
@@ -49,19 +72,35 @@ const OrgDashboard = () => {
         action={
           <button
             onClick={() => navigate("/organizer/create")}
-            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:scale-105"
+            className="
+              flex
+              items-center
+              gap-2
+              rounded-2xl
+              bg-primary
+              px-6
+              py-3
+              text-sm
+              font-bold
+              text-white
+              shadow-lg
+              shadow-primary/30
+              transition
+              hover:bg-primary-hover
+              hover:scale-[1.02]
+            "
           >
             <PlusCircle size={18} />
-            <span>Create New Event</span>
+            Create New Event
           </button>
         }
       />
 
-      {/* KPI Stat Cards */}
+      {/* Statistics */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="My Organized Events"
-          value={stats.totalEvents}
+          value={stats.totalEvents || 0}
           icon={ClipboardList}
           color="from-blue-500 to-cyan-500"
           loading={loading}
@@ -69,7 +108,7 @@ const OrgDashboard = () => {
 
         <StatCard
           title="Total Tickets Reserved"
-          value={stats.totalBookings}
+          value={stats.totalBookings || 0}
           icon={Ticket}
           color="from-purple-500 to-indigo-500"
           loading={loading}
@@ -77,83 +116,69 @@ const OrgDashboard = () => {
 
         <StatCard
           title="Estimated Revenue"
-          value={formatCurrency(stats.totalRevenue)}
+          value={formatCurrency(stats.totalRevenue || 0)}
           icon={IndianRupee}
           color="from-emerald-500 to-teal-500"
           loading={loading}
         />
       </div>
 
-      {/* Quick Action Shortcuts */}
+      {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div
+        <QuickAction
+          icon={PlusCircle}
+          color="primary"
+          title="Host New Event"
+          description="Add dates, tickets & venue"
           onClick={() => navigate("/organizer/create")}
-          className="group flex cursor-pointer items-center justify-between rounded-3xl border border-white/10 bg-[#12121A]/80 p-5 backdrop-blur-xl transition hover:-translate-y-1 hover:border-blue-500/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400">
-              <PlusCircle size={22} />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm">Host New Event</p>
-              <p className="text-xs text-gray-400">Add dates, tickets & venue</p>
-            </div>
-          </div>
-          <ArrowRight size={18} className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-blue-400" />
-        </div>
+        />
 
-        <div
+        <QuickAction
+          icon={Users}
+          color="purple"
+          title="Attendee List"
+          description="Check registrations & status"
           onClick={() => navigate("/organizer/attendees")}
-          className="group flex cursor-pointer items-center justify-between rounded-3xl border border-white/10 bg-[#12121A]/80 p-5 backdrop-blur-xl transition hover:-translate-y-1 hover:border-blue-500/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400">
-              <Users size={22} />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm">Attendee List</p>
-              <p className="text-xs text-gray-400">Check registrations & status</p>
-            </div>
-          </div>
-          <ArrowRight size={18} className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-purple-400" />
-        </div>
+        />
 
-        <div
+        <QuickAction
+          icon={ScanLine}
+          color="green"
+          title="QR Ticket Scanner"
+          description="Validate E-Tickets live"
           onClick={() => navigate("/organizer/scan/demo")}
-          className="group flex cursor-pointer items-center justify-between rounded-3xl border border-white/10 bg-[#12121A]/80 p-5 backdrop-blur-xl transition hover:-translate-y-1 hover:border-blue-500/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
-              <ScanLine size={22} />
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm">QR Ticket Scanner</p>
-              <p className="text-xs text-gray-400">Validate E-Tickets live</p>
-            </div>
-          </div>
-          <ArrowRight size={18} className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-emerald-400" />
-        </div>
+        />
       </div>
 
-      {/* Recent Organizer Events Grid */}
+      {/* Events */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-extrabold text-white">Your Events</h2>
+          <h2 className="text-2xl font-extrabold text-text">Your Events</h2>
+
           <button
             onClick={() => navigate("/organizer/events")}
-            className="flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300"
+            className="
+              flex
+              items-center
+              gap-1.5
+              text-xs
+              font-bold
+              text-primary
+              transition
+              hover:text-primary-hover
+            "
           >
-            <span>Manage All ({events.length})</span>
+            Manage All ({events.length})
             <ArrowRight size={14} />
           </button>
         </div>
 
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-80 w-full animate-pulse rounded-3xl border border-white/10 bg-white/5"
+                className="h-80 animate-pulse rounded-3xl border border-border bg-surface/50"
               />
             ))}
           </div>
@@ -164,7 +189,20 @@ const OrgDashboard = () => {
             action={
               <button
                 onClick={() => navigate("/organizer/create")}
-                className="rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg"
+                className="
+                  rounded-2xl
+                  bg-primary
+                  px-6
+                  py-2.5
+                  text-xs
+                  font-bold
+                  text-white
+                  shadow-lg
+                  shadow-primary/30
+                  transition
+                  hover:bg-primary-hover
+                  hover:scale-[1.02]
+                "
               >
                 Create Event
               </button>
@@ -172,18 +210,80 @@ const OrgDashboard = () => {
           />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.slice(0, 3).map((evt) => (
+            {events.slice(0, 3).map((event) => (
               <EventCard
-                key={evt._id || evt.id}
-                event={evt}
+                key={event._id}
+                event={event}
                 showActions
-                onView={() => navigate(`/event/${evt._id || evt.id}`)}
-                onEdit={() => navigate(`/organizer/events/edit/${evt._id || evt.id}`)}
+                onView={() => navigate(`/organizer/events/${event._id}`)}
+                onEdit={() => navigate(`/organizer/events/edit/${event._id}`)}
               />
             ))}
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const QuickAction = ({ icon: Icon, title, description, onClick, color }) => {
+  const colorMap = {
+    primary: {
+      bg: "bg-primary/10",
+      text: "text-primary",
+      border: "hover:border-primary/30",
+    },
+    purple: {
+      bg: "bg-purple-500/10",
+      text: "text-purple-400",
+      border: "hover:border-purple-500/30",
+    },
+    green: {
+      bg: "bg-green-500/10",
+      text: "text-green-400",
+      border: "hover:border-green-500/30",
+    },
+  };
+
+  const colors = colorMap[color] || colorMap.primary;
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        group
+        flex
+        cursor-pointer
+        items-center
+        justify-between
+        rounded-3xl
+        border
+        border-border
+        bg-surface/80
+        p-5
+        backdrop-blur-xl
+        transition
+        hover:-translate-y-1
+        ${colors.border}
+      `}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colors.bg} ${colors.text}`}
+        >
+          <Icon size={22} />
+        </div>
+
+        <div>
+          <p className="text-sm font-bold text-text">{title}</p>
+          <p className="text-xs text-text-muted">{description}</p>
+        </div>
+      </div>
+
+      <ArrowRight
+        size={18}
+        className="text-text-muted transition group-hover:translate-x-1"
+      />
     </div>
   );
 };

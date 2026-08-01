@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { PlusCircle, ClipboardList, CheckCircle2, AlertCircle, Ban } from "lucide-react";
+import {
+  PlusCircle,
+  ClipboardList,
+  CheckCircle2,
+  AlertCircle,
+  Ban,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -20,6 +26,7 @@ const ManageEvents = () => {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchEvents = async () => {
@@ -34,10 +41,9 @@ const ManageEvents = () => {
     }
   };
 
-
-
   const deleteEvent = async (id) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
+
     try {
       await api.delete(`/events/${id}`);
       toast.success("Event deleted");
@@ -52,11 +58,12 @@ const ManageEvents = () => {
       const searchMatch =
         evt.title?.toLowerCase().includes(search.toLowerCase()) ||
         evt.description?.toLowerCase().includes(search.toLowerCase());
+
       const statusMatch = !statusFilter || evt.status === statusFilter;
+
       return searchMatch && statusMatch;
     });
   }, [events, search, statusFilter]);
-
 
   const total = events.length;
   const published = events.filter((e) => e.status === "approved").length;
@@ -72,47 +79,106 @@ const ManageEvents = () => {
         action={
           <button
             onClick={() => navigate("/organizer/create")}
-            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:scale-105"
+            className="
+              flex
+              items-center
+              gap-2
+              rounded-2xl
+              bg-primary
+              px-6
+              py-3
+              text-sm
+              font-bold
+              text-white
+              shadow-lg
+              shadow-primary/30
+              transition
+              hover:bg-primary-hover
+              hover:scale-[1.02]
+            "
           >
             <PlusCircle size={18} />
-            <span>Create New Event</span>
+            Create New Event
           </button>
         }
       />
 
       {/* KPI Stats */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Events" value={total} icon={ClipboardList} color="from-blue-500 to-indigo-600" />
-        <StatCard title="Published Live" value={published} icon={CheckCircle2} color="from-emerald-500 to-teal-500" />
-        <StatCard title="Draft Stage" value={draft} icon={AlertCircle} color="from-amber-500 to-orange-500" />
-        <StatCard title="Cancelled" value={cancelled} icon={Ban} color="from-rose-500 to-pink-500" />
+        <StatCard
+          title="Total Events"
+          value={total}
+          icon={ClipboardList}
+          color="from-primary to-primary/70"
+        />
+        <StatCard
+          title="Published Live"
+          value={published}
+          icon={CheckCircle2}
+          color="from-green-500 to-emerald-500"
+        />
+        <StatCard
+          title="Draft Stage"
+          value={draft}
+          icon={AlertCircle}
+          color="from-amber-500 to-yellow-500"
+        />
+        <StatCard
+          title="Cancelled"
+          value={cancelled}
+          icon={Ban}
+          color="from-danger to-danger/70"
+        />
       </div>
 
-      {/* Search & Status Filter Bar */}
-      <SearchFilterBar
-        searchTerm={search}
-        onSearchChange={setSearch}
-        statusOptions={[
-          { value: "published", label: "Published Live" },
-          { value: "draft", label: "Draft Stage" },
-          { value: "cancelled", label: "Cancelled" },
-        ]}
-        selectedStatus={statusFilter}
-        onStatusChange={setStatusFilter}
-        placeholder="Filter your organized events..."
-      />
+      {/* Search & Status Filter */}
+      <div
+        className="
+          rounded-3xl
+          border
+          border-border
+          bg-surface/80
+          p-4
+          backdrop-blur-xl
+        "
+      >
+        <SearchFilterBar
+          searchTerm={search}
+          onSearchChange={setSearch}
+          statusOptions={[
+            {
+              value: "approved",
+              label: "Published Live",
+            },
+            {
+              value: "pending",
+              label: "Draft Stage",
+            },
+            {
+              value: "rejected",
+              label: "Cancelled",
+            },
+          ]}
+          selectedStatus={statusFilter}
+          onStatusChange={setStatusFilter}
+          placeholder="Search your organized events..."
+        />
+      </div>
 
       {/* Events Grid */}
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-80 w-full animate-pulse rounded-3xl border border-white/10 bg-white/5" />
+            <div
+              key={i}
+              className="h-80 animate-pulse rounded-3xl border border-border bg-surface/50"
+            />
           ))}
         </div>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
           title="No Events Found"
-          description="There are no events matching your current search or status filter."
+          description="There are no events matching your current filters."
           icon={ClipboardList}
           action={
             <button
@@ -120,7 +186,20 @@ const ManageEvents = () => {
                 setSearch("");
                 setStatusFilter("");
               }}
-              className="rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg"
+              className="
+                rounded-2xl
+                bg-primary
+                px-6
+                py-2.5
+                text-xs
+                font-bold
+                text-white
+                shadow-lg
+                shadow-primary/30
+                transition
+                hover:bg-primary-hover
+                hover:scale-[1.02]
+              "
             >
               Clear Filters
             </button>
@@ -134,7 +213,9 @@ const ManageEvents = () => {
               event={evt}
               showActions
               onView={() => navigate(`/organizer/events/${evt._id || evt.id}`)}
-              onEdit={() => navigate(`/organizer/events/edit/${evt._id || evt.id}`)}
+              onEdit={() =>
+                navigate(`/organizer/events/edit/${evt._id || evt.id}`)
+              }
               onDelete={() => deleteEvent(evt._id || evt.id)}
             />
           ))}

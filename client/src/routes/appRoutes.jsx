@@ -40,9 +40,11 @@ import CreateEvent from "../pages/organizer/CreateEvent";
 import ManageEvents from "../pages/organizer/ManageEvents";
 import Attendees from "../pages/organizer/Attendees";
 import QRScanPage from "../pages/organizer/QRScanPage";
+import OrganizerAnalytics from "../pages/organizer/OrganizerAnalytics";
 
 // Admin Pages
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminAnalytics from "../pages/admin/AdminAnalytics";
 import ManageAllEvents from "../pages/admin/ManageAllEvents";
 import ManageUsers from "../pages/admin/ManageUsers";
 import UserDetails from "../pages/admin/UserDetails";
@@ -96,6 +98,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute role="organizer" />}>
         <Route element={<SidebarLayout />}>
           <Route path="/organizer/dashboard" element={<OrgDashboard />} />
+          <Route path="/organizer/analytics" element={<OrganizerAnalytics />} />
           <Route path="/organizer/create" element={<CreateEvent />} />
           <Route path="/organizer/events" element={<ManageEvents />} />
           <Route path="/organizer/events/:id" element={<EventDetail />} />
@@ -111,6 +114,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute role="admin" />}>
         <Route element={<SidebarLayout />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/events" element={<ManageAllEvents />} />
           <Route path="/admin/events/:id" element={<EventDetail />} />
           <Route path="/admin/users" element={<ManageUsers />} />

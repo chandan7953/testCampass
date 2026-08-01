@@ -11,15 +11,22 @@ const createNotification = async ({
 
   try {
 
-    const notification =
-      await Notification.create({
-        userId,
-        title,
-        message,
-        type,
-        data,
-      });
+    const notification = await Notification.create({
+      userId,
+      title,
+      message,
+      type,
+      data,
+    });
 
+    try {
+      const socketConfig = require("../configs/socket");
+      const io = socketConfig.getIO();
+      // Emit to the user's personal room
+      io.to(userId.toString()).emit("newNotification", notification);
+    } catch (socketError) {
+      console.error("Socket emit failed:", socketError.message);
+    }
 
     return notification;
 

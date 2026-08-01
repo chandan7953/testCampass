@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { LayoutDashboard, ClipboardList, Building2, Tag, Users, User } from 'lucide-react-native';
+import { LayoutDashboard, ClipboardList, Building2, Tag, Users } from 'lucide-react-native';
+import { useTheme } from '../utils/ThemeContext';
 
 // Admin Screens
 import AdminDashboard from '../screens/admin/AdminDashboard';
@@ -12,15 +13,17 @@ import ManageUsers from '../screens/admin/ManageUsers';
 const Tab = createBottomTabNavigator();
 
 const AdminTabs = () => {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        headerStyle: { backgroundColor: '#0a0a0f', shadowColor: 'transparent', elevation: 0 },
-        headerTintColor: '#fff',
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: { backgroundColor: '#181824', borderTopWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)' },
+        headerStyle: { backgroundColor: theme.colors.background, shadowColor: 'transparent', elevation: 0 },
+        headerTintColor: theme.colors.text,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarStyle: { backgroundColor: theme.colors.surface, borderTopWidth: 1, borderColor: theme.colors.border },
       }}
     >
       <Tab.Screen 

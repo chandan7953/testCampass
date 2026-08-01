@@ -6,7 +6,7 @@ const expireBookings = async () => {
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     const expiredBookings = await Booking.find({
-      paymentStatus: "pending",
+      paymentStatus: { $in: ["pending", "unpaid"] },
       bookingStatus: "pending",
       createdAt: { $lt: tenMinutesAgo },
     });

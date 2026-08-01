@@ -11,6 +11,11 @@ const QRCodeCard = ({ booking, onDownload }) => {
   const bookingCode = booking.bookingCode || booking._id || "CP-000000";
   const isPaid = booking.paymentStatus === "paid";
 
+  const qrImageSrc =
+    booking.qrCode && (booking.qrCode.startsWith("data:") || booking.qrCode.startsWith("http"))
+      ? booking.qrCode
+      : `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(bookingCode)}`;
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -22,21 +27,13 @@ const QRCodeCard = ({ booking, onDownload }) => {
       </View>
 
       <View style={styles.qrContainer}>
-        {booking.qrCode ? (
-          <View style={styles.qrImageWrapper}>
-            <Image
-              source={{ uri: booking.qrCode }}
-              style={styles.qrImage}
-              resizeMode="contain"
-            />
-          </View>
-        ) : (
-          <View style={styles.qrFallback}>
-            <AlertTriangle size={32} color="#fbbf24" style={{ marginBottom: 8 }} />
-            <Text style={styles.fallbackTitle}>QR unavailable</Text>
-            <Text style={styles.fallbackSub}>Contact support</Text>
-          </View>
-        )}
+        <View style={styles.qrImageWrapper}>
+          <Image
+            source={{ uri: qrImageSrc }}
+            style={styles.qrImage}
+            resizeMode="contain"
+          />
+        </View>
 
         <Text style={styles.passId}>PASS ID: {bookingCode}</Text>
 

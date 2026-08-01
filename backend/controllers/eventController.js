@@ -7,9 +7,8 @@ const Ticket = require("../models/Ticket");
 
 const apiResponse = require("../utils/apiResponse");
 const ApiError = require("../utils/ApiError");
-
-const createNotification =
-  require("../utils/createNotification");
+const createNotification = require("../utils/createNotification");
+const checkVenueAvailability = require("../utils/checkVenueAvailability");
 
 const {
   uploadToCloudinary,
@@ -26,16 +25,22 @@ const createEvent = async (req, res, next) => {
       category,
       venue,
       startDate,
+      startTime,
       endDate,
+      endTime,
       registrationDeadline,
       capacity,
       price,
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !venue || !startDate || !endDate || capacity === undefined || capacity === null) {
-      throw new ApiError(400, "Missing required fields: title, description, category, venue, startDate, endDate, and capacity are required");
+    if (!title || !category || !venue || !startDate) {
+      throw new ApiError(400, "Title, Category, Venue, and Start Date are required");
     }
+
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const finalDescription = description ? description.trim() : title.trim();
 
     /*
     --------------------------------
@@ -59,24 +64,22 @@ const createEvent = async (req, res, next) => {
 
     /*
     --------------------------------
-    Check Venue Availability
+    Check Venue Availability (time-aware)
     --------------------------------
     */
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const { available, conflictingEvent } = await checkVenueAvailability(
+      venue,
+      startDate,
+      startTime || "",
+      endDate || startDate,
+      endTime || ""
+    );
 
-    const existingEvents = await Event.find({
-      venue: venue,
-      status: { $in: ['approved', 'pending'] },
-      $or: [
-        { startDate: { $lt: end, $gte: start } },
-        { endDate: { $gt: start, $lte: end } },
-        { startDate: { $lte: start }, endDate: { $gte: end } }
-      ]
-    });
-
-    if (existingEvents.length > 0) {
-      throw new ApiError(400, "Venue is already booked for the selected time slot");
+    if (!available) {
+      throw new ApiError(
+        400,
+        `Venue is already booked during this time. Conflict with event: "${conflictingEvent.title}"`
+      );
     }
 
     /*
@@ -146,13 +149,15 @@ const createEvent = async (req, res, next) => {
     */
     const event = await Event.create({
       title: title.trim(),
-      description: description.trim(),
-      poster, // ← Now poster is always defined (empty string if no file)
+      description: finalDescription,
+      poster,
       category,
       organizer: req.user.id,
       venue,
       startDate: start,
+      startTime: startTime || "",
       endDate: end,
+      endTime: endTime || "",
       registrationDeadline: deadline,
       capacity: eventCapacity,
       price: eventPrice,
@@ -267,26 +272,34 @@ const updateEvent = async (req, res, next) => {
 
 
 
-    Object.assign(
-      event,
-      req.body
-    );
+    Object.assign(event, req.body);
 
+    // If venue or dates changed, re-validate venue availability
+    if (req.body.venue || req.body.startDate || req.body.endDate || req.body.startTime || req.body.endTime) {
+      const { available, conflictingEvent } = await checkVenueAvailability(
+        event.venue,
+        event.startDate,
+        event.startTime || "",
+        event.endDate,
+        event.endTime || "",
+        event._id.toString() // Exclude current event from check
+      );
 
-
+      if (!available) {
+        throw new ApiError(
+          400,
+          `Venue is already booked during this time. Conflict with event: "${conflictingEvent.title}"`
+        );
+      }
+    }
 
     if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file,
+        "campuspass/events"
+      );
 
-      const result =
-        await uploadToCloudinary(
-          req.file,
-          "campuspass/events"
-        );
-
-
-      event.poster =
-        result.secure_url;
-
+      event.poster = result.secure_url;
     }
 
 
