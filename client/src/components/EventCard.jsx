@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Eye, Pencil, Trash2, Send, Ban, Tag } from "lucide-react";
+import { Calendar, MapPin, Eye, Pencil, Trash2, Send, Ban, Tag, Star } from "lucide-react";
 import { useSelector } from "react-redux";
 import StatusBadge from "./StatusBadge";
 import { formatDate, formatCurrency } from "../utils/formatters";
@@ -19,6 +19,8 @@ const EventCard = ({
 
   if (!event) return null;
 
+  const eventRating = event.averageRating || event.rating;
+
   return (
     <div className={`group flex h-full flex-col overflow-hidden rounded-[2rem] border border-border bg-surface/50 backdrop-blur-xl shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/30 ${compact ? '' : 'my-3'}`}>
       
@@ -38,9 +40,15 @@ const EventCard = ({
           </div>
         )}
 
-        {!compact && event.status && (
-          <div className="absolute right-4 top-4">
-            <StatusBadge status={event.status} />
+        {!compact && (
+          <div className="absolute right-4 top-4 flex items-center gap-2">
+            {eventRating > 0 && (
+              <div className="flex items-center gap-1 rounded-full border border-yellow-500/40 bg-black/60 px-2.5 py-1 text-xs font-black text-yellow-400 backdrop-blur-md shadow-md">
+                <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                <span>{Number(eventRating).toFixed(1)}</span>
+              </div>
+            )}
+            {event.status && <StatusBadge status={event.status} />}
           </div>
         )}
 

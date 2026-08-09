@@ -15,6 +15,7 @@ import {
   Map,
   CheckCircle,
   Building2,
+  Star,
 } from "lucide-react";
 
 import toast from "react-hot-toast";
@@ -36,6 +37,7 @@ const EventDetail = () => {
   const [availableSeats, setAvailableSeats] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [savingFav, setSavingFav] = useState(false);
+  const [ratingStats, setRatingStats] = useState(null);
 
   useEffect(() => {
     fetchEventDetails();
@@ -218,22 +220,45 @@ const EventDetail = () => {
 
           <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/60 to-transparent" />
 
-          <div className="absolute left-6 top-6 flex gap-3">
+          <div className="absolute left-6 top-6 flex flex-wrap gap-3">
             <span className="rounded-full border border-border/50 bg-surface/80 px-3.5 py-1 text-xs font-bold text-text backdrop-blur-sm">
               <Tag size={12} className="mr-1 inline text-primary" />
               {event.category?.name || "Campus Event"}
             </span>
 
             <StatusBadge status={event.status || "pending"} />
+
+            {ratingStats && ratingStats.totalReviews > 0 && (
+              <a
+                href="#reviews"
+                className="flex items-center gap-1 rounded-full border border-yellow-500/40 bg-black/60 px-3 py-1 text-xs font-bold text-yellow-400 backdrop-blur-md transition hover:scale-105"
+              >
+                <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                <span>{ratingStats.averageRating?.toFixed(1)}</span>
+                <span className="text-[10px] text-gray-300">({ratingStats.totalReviews})</span>
+              </a>
+            )}
           </div>
         </div>
 
         <div className="relative -mt-16 space-y-6 p-6 sm:p-8">
           <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
-              <h1 className="text-3xl font-black text-text sm:text-5xl">
-                {event.title}
-              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-black text-text sm:text-5xl">
+                  {event.title}
+                </h1>
+                {ratingStats && ratingStats.totalReviews > 0 && (
+                  <a
+                    href="#reviews"
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-3.5 py-1 text-sm font-bold text-yellow-400 transition hover:bg-yellow-500/20"
+                  >
+                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                    <span>{ratingStats.averageRating?.toFixed(1)}</span>
+                    <span className="text-xs font-normal text-text-muted">({ratingStats.totalReviews} reviews)</span>
+                  </a>
+                )}
+              </div>
               <p className="mt-2 text-sm font-semibold text-primary">
                 Organized by: {event.organizer?.fullName || "Campus Organizer"}
               </p>
@@ -464,7 +489,7 @@ const EventDetail = () => {
       </div>
 
       {/* Reviews */}
-      <EventReviews eventId={id} user={user} />
+      <EventReviews eventId={id} user={user} onRatingUpdate={setRatingStats} />
     </div>
   );
 };

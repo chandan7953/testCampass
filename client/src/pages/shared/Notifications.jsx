@@ -9,6 +9,7 @@ import {
   CheckCheck,
   PartyPopper,
   AlertCircle,
+  Clock,
 } from "lucide-react";
 
 import toast from "react-hot-toast";
@@ -64,8 +65,6 @@ const Notifications = () => {
     const handleNewNotification = (notification) => {
       if (page === 1) {
         setNotifications((prev) => {
-          // If we prepend, we might exceed limit of 10, but that's fine for real-time. 
-          // The user will just see 11 items until they refresh/change page.
           return [notification, ...prev];
         });
       }
@@ -173,10 +172,10 @@ const Notifications = () => {
           notifications.some((n) => !n.isRead) && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#12121A] px-4 py-2.5 text-xs font-bold text-gray-300 hover:bg-white/10"
+              className="flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2.5 text-xs font-bold text-text transition-all hover:border-primary/40 hover:bg-surface-secondary active:scale-95"
             >
-              <CheckCheck size={16} className="text-blue-400" />
-              Mark All Read
+              <CheckCheck size={16} className="text-primary" />
+              <span>Mark All Read</span>
             </button>
           )
         }
@@ -185,7 +184,7 @@ const Notifications = () => {
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 rounded-3xl bg-white/5 animate-pulse" />
+            <div key={i} className="h-24 rounded-3xl border border-border bg-surface-secondary/50 animate-pulse" />
           ))}
         </div>
       ) : notifications.length === 0 ? (
@@ -198,43 +197,86 @@ const Notifications = () => {
         <div className="space-y-4">
           {notifications.map((notification) => {
             const Icon = getIcon(notification.type);
+            const isUnread = !notification.isRead;
 
             return (
               <div
                 key={notification._id}
-                className={`flex gap-4 rounded-3xl border p-5 backdrop-blur-xl transition
-                ${notification.isRead ? "border-white/10 bg-[#12121A]/70" : "border-blue-500/40 bg-blue-500/10"}
-                `}
+                className={`group relative flex gap-4 rounded-3xl border p-5 backdrop-blur-xl transition-all duration-300 ${
+                  isUnread
+                    ? "border-primary/40 bg-primary/5 dark:bg-primary/10 shadow-md shadow-primary/5"
+                    : "border-border bg-surface/80 opacity-85 hover:opacity-100 hover:border-primary/30"
+                }`}
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400">
+                {/* Unread Indicator Bar */}
+                {isUnread && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-full bg-primary" />
+                )}
+
+                {/* Icon Container */}
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-colors ${
+                    isUnread
+                      ? "border-primary/30 bg-primary/15 text-primary"
+                      : "border-border bg-surface-secondary text-text-muted group-hover:border-primary/30 group-hover:text-primary"
+                  }`}
+                >
                   <Icon size={22} />
                 </div>
 
-                <div onClick={() => handleNotificationClick(notification)} className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-white">{notification.title}</h3>
+                {/* Main Content */}
+                <div
+                  onClick={() => handleNotificationClick(notification)}
+                  className="flex-1 cursor-pointer space-y-1"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3
+                      className={`text-sm ${
+                        isUnread ? "font-extrabold text-text" : "font-bold text-text"
+                      }`}
+                    >
+                      {notification.title}
+                    </h3>
 
-                    {!notification.isRead && (
-                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                    {isUnread ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-black uppercase text-black shadow-xs">
+                        <span className="h-1.5 w-1.5 rounded-full bg-black animate-pulse" />
                         NEW
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-text-muted">
+                        <CheckCheck size={13} className="text-primary" />
+                        Read
                       </span>
                     )}
                   </div>
 
-                  <p className="mt-1 text-xs text-gray-300">{notification.message}</p>
+                  <p
+                    className={`text-xs leading-relaxed ${
+                      isUnread ? "font-medium text-text" : "text-text-muted"
+                    }`}
+                  >
+                    {notification.message}
+                  </p>
 
-                  <p className="mt-2 text-[10px] text-gray-500">{new Date(notification.createdAt).toLocaleString()}</p>
+                  <div className="flex items-center gap-1.5 pt-1 text-[11px] text-text-muted">
+                    <Clock size={12} className="text-text-muted/70" />
+                    <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                  </div>
                 </div>
 
+                {/* Delete Action */}
                 <button
                   onClick={() => deleteNotification(notification._id)}
-                  className="h-fit rounded-xl p-2 text-rose-400 hover:bg-rose-500/10"
+                  className="h-fit rounded-xl p-2 text-text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+                  title="Delete Notification"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             );
           })}
+
           {totalPages > 1 && (
             <div className="pt-4 pb-8">
               <Pagination
