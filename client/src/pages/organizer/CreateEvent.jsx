@@ -6,11 +6,24 @@ import {
   Save,
   Trash2,
   Upload,
+  Sparkles,
+  Wand2,
+  RefreshCw,
+  Bot,
+  CheckCircle2,
+  Zap,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import api from "../../api/axios";
 import PageHeader from "../../components/PageHeader";
+
+const SAMPLE_PROMPTS = [
+  "24-hour Tech Hackathon with coding contests, keynote speakers, and ₹500 prizes",
+  "Live Music Night featuring campus bands, food stalls, and free entry for all",
+  "AI & Data Science Workshop with hands-on labs and certificates for 100 students",
+  "Annual Inter-College Sports Meet with football, basketball, and trophies",
+];
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -26,6 +39,12 @@ const CreateEvent = () => {
   const [poster, setPoster] = useState(null);
   const [preview, setPreview] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+
+  // AI Auto-Fill States
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPosterLoading, setAiPosterLoading] = useState(false);
+  const [aiSuccess, setAiSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -111,7 +130,6 @@ const CreateEvent = () => {
       if (event.poster) {
         const formattedUrl = getImageUrl(event.poster);
         setPreview(formattedUrl);
-        // Reset poster state since this is a URL, not a File object
         setPoster(null);
       }
     } catch (error) {
@@ -184,9 +202,108 @@ const CreateEvent = () => {
     setPoster(null);
     setPreview("");
 
-    // Reset the file input
     if (posterInputRef.current) {
       posterInputRef.current.value = "";
+    }
+  };
+
+  // ==========================================
+  // Google Gemini AI Auto-Fill Handler
+  // ==========================================
+  const handleAiAutofill = async (promptTextOverride) => {
+    const promptToUse =
+      typeof promptTextOverride === "string" ? promptTextOverride : aiPrompt;
+
+    if (!promptToUse || !promptToUse.trim()) {
+      toast.error("Please enter a description or prompt for Google Gemini AI");
+      return;
+    }
+
+    const toastId = toast.loading(
+      "Google Gemini AI is generating event fields & poster..."
+    );
+
+    try {
+      setAiLoading(true);
+      setAiSuccess(false);
+
+      const res = await api.post("/ai/autofill-event", {
+        prompt: promptToUse.trim(),
+      });
+
+      const data = res.data.data;
+
+      setFormData({
+        title: data.title || "",
+        description: data.description || "",
+        category: data.category || "",
+        venue: data.venue || "",
+        price: data.price !== undefined ? String(data.price) : "0",
+        startDate: data.startDate || "",
+        endDate: data.endDate || "",
+        capacity: data.capacity ? String(data.capacity) : "100",
+      });
+
+      if (data.posterUrl) {
+        setPreview(data.posterUrl);
+        setPoster(null);
+      }
+
+      setAiSuccess(true);
+      toast.success(
+        "Event form & poster auto-filled using Google Gemini API!",
+        { id: toastId }
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || "Failed to auto-fill form with AI",
+        { id: toastId }
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // ==========================================
+  // Standalone AI Poster Generator Handler
+  // ==========================================
+  const handleAiGeneratePoster = async () => {
+    if (!formData.title?.trim()) {
+      toast.error("Please enter an event title first before generating poster");
+      return;
+    }
+
+    const selectedCat = categories.find(
+      (c) => (c._id || c.id) === formData.category
+    );
+    const categoryName = selectedCat ? selectedCat.name : "";
+
+    const toastId = toast.loading("Generating custom event poster with AI...");
+
+    try {
+      setAiPosterLoading(true);
+
+      const res = await api.post("/ai/generate-poster", {
+        title: formData.title,
+        description: formData.description,
+        categoryName,
+      });
+
+      const posterUrl = res.data.data?.posterUrl;
+      if (posterUrl) {
+        setPreview(posterUrl);
+        setPoster(null);
+        toast.success("AI Poster generated successfully!", { id: toastId });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || "Failed to generate AI poster",
+        { id: toastId }
+      );
+    } finally {
+      setAiPosterLoading(false);
     }
   };
 
@@ -227,9 +344,15 @@ const CreateEvent = () => {
       data.append("endDate", formData.endDate || formData.startDate);
       data.append("capacity", formData.capacity || "100");
 
-      // Only append poster if it's a File object (new upload)
+      // Handle poster parameter (File upload vs AI/URL poster)
       if (poster && poster instanceof File) {
         data.append("poster", poster);
+      } else if (
+        preview &&
+        typeof preview === "string" &&
+        (preview.startsWith("http://") || preview.startsWith("https://"))
+      ) {
+        data.append("poster", preview);
       }
 
       if (isEdit) {
@@ -248,7 +371,6 @@ const CreateEvent = () => {
     }
   };
 
-  // Clean up object URLs to prevent memory leaks
   useEffect(() => {
     return () => {
       if (preview && preview.startsWith("blob:")) {
@@ -322,9 +444,114 @@ const CreateEvent = () => {
         subtitle={
           isEdit
             ? "Update your event information, pricing, schedule and capacity."
-            : "Create and publish a new campus event for students."
+            : "Create and publish a new campus event for students using Google AI."
         }
       />
+
+      {/* ==================================================== */}
+      {/* GOOGLE GEMINI AI AUTO-FILL ASSISTANT CARD */}
+      {/* ==================================================== */}
+      <div
+        className="
+          relative overflow-hidden
+          rounded-3xl border border-primary/30
+          bg-gradient-to-br from-primary/10 via-surface/90 to-surface-secondary/80
+          p-6 shadow-xl backdrop-blur-xl md:p-8
+        "
+      >
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
+              <Sparkles className="h-5 w-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-text">
+                  Google Gemini AI Auto-Fill Assistant
+                </h3>
+                <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase text-primary border border-primary/30">
+                  Powered by GEMINI_API_KEY
+                </span>
+              </div>
+              <p className="text-xs text-text-muted mt-0.5">
+                Describe your event idea and AI will generate all fields, poster, and select matching backend Category & Venue.
+              </p>
+            </div>
+          </div>
+          {aiSuccess && (
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-500 border border-emerald-500/20">
+              <CheckCircle2 size={14} /> Auto-Filled
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <textarea
+              rows={2}
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="e.g. 24-hour Tech Hackathon with coding contests, keynote speakers, free food and prizes next Saturday at Main Auditorium"
+              className="
+                w-full rounded-2xl border border-border/80 bg-surface/90 px-4 py-3 text-sm text-text
+                placeholder:text-text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition
+              "
+            />
+          </div>
+
+          {/* Prompt Chips */}
+          <div className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted flex items-center gap-1">
+              <Zap size={12} className="text-primary" /> Try sample prompts:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SAMPLE_PROMPTS.map((promptText, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setAiPrompt(promptText);
+                    handleAiAutofill(promptText);
+                  }}
+                  className="
+                    rounded-xl border border-border/60 bg-surface-secondary/70 px-3 py-1.5 text-xs text-text-muted
+                    transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary text-left truncate max-w-xs
+                  "
+                >
+                  {promptText}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              disabled={aiLoading || !aiPrompt.trim()}
+              onClick={() => handleAiAutofill()}
+              className="
+                inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-indigo-600
+                px-6 py-3 text-xs font-bold text-white shadow-lg shadow-primary/25 transition
+                hover:opacity-90 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed
+              "
+            >
+              {aiLoading ? (
+                <>
+                  <RefreshCw size={15} className="animate-spin" />
+                  Generating Event & Poster...
+                </>
+              ) : (
+                <>
+                  <Wand2 size={15} />
+                  Auto-Fill Form with Gemini AI
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <form
         onSubmit={handleSubmit}
@@ -341,19 +568,37 @@ const CreateEvent = () => {
       >
         {/* Poster Upload */}
         <div>
-          <label
-            className="
-              mb-3
-              block
-              text-xs
-              font-bold
-              uppercase
-              tracking-wider
-              text-text-muted
-            "
-          >
-            Event Poster
-          </label>
+          <div className="mb-3 flex items-center justify-between">
+            <label
+              className="
+                block
+                text-xs
+                font-bold
+                uppercase
+                tracking-wider
+                text-text-muted
+              "
+            >
+              Event Poster
+            </label>
+
+            <button
+              type="button"
+              disabled={aiPosterLoading || !formData.title?.trim()}
+              onClick={handleAiGeneratePoster}
+              className="
+                inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10
+                px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/20 disabled:opacity-40
+              "
+            >
+              {aiPosterLoading ? (
+                <RefreshCw size={13} className="animate-spin" />
+              ) : (
+                <Sparkles size={13} />
+              )}
+              {aiPosterLoading ? "Generating..." : "Generate AI Poster"}
+            </button>
+          </div>
 
           <input
             ref={posterInputRef}
@@ -411,10 +656,12 @@ const CreateEvent = () => {
               >
                 {poster && poster instanceof File
                   ? poster.name
+                  : preview.startsWith("http")
+                  ? "AI Generated Event Poster"
                   : "Current Event Poster"}
               </p>
 
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => posterInputRef.current?.click()}
@@ -437,6 +684,32 @@ const CreateEvent = () => {
                 >
                   <Upload size={14} />
                   Change Poster
+                </button>
+
+                <button
+                  type="button"
+                  disabled={aiPosterLoading || !formData.title?.trim()}
+                  onClick={handleAiGeneratePoster}
+                  className="
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    rounded-2xl
+                    border
+                    border-primary/30
+                    bg-primary/10
+                    px-5
+                    py-2.5
+                    text-xs
+                    font-bold
+                    text-primary
+                    transition
+                    hover:bg-primary/20
+                    disabled:opacity-40
+                  "
+                >
+                  <Wand2 size={14} />
+                  Regenerate with AI
                 </button>
 
                 <button
@@ -521,7 +794,7 @@ const CreateEvent = () => {
                     text-text
                   "
                 >
-                  Click or drag poster image to upload
+                  Click, drag poster image or use AI generator above
                 </p>
 
                 <p
@@ -628,7 +901,7 @@ const CreateEvent = () => {
                 text-text-muted
               "
             >
-              Category
+              Category * (From Backend Model Only)
             </label>
 
             <select
@@ -674,7 +947,7 @@ const CreateEvent = () => {
                 text-text-muted
               "
             >
-              Campus Venue
+              Campus Venue * (From Backend Model Only)
             </label>
 
             <select
@@ -703,7 +976,7 @@ const CreateEvent = () => {
                   value={venue._id || venue.id}
                   className="bg-surface-secondary"
                 >
-                  {venue.name}
+                  {venue.name} ({venue.collegeName || "Main Campus"})
                 </option>
               ))}
             </select>

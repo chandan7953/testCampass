@@ -16,6 +16,7 @@ const organizerRoutes = require("./routes/organizerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const errorHandler = require("./middlewares/errorHandler");
 
@@ -67,6 +68,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 app.use("/api/contact", contactRoutes);
+
+app.use("/api/ai", aiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

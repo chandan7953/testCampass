@@ -131,7 +131,7 @@ const createEvent = async (req, res, next) => {
     Initialize it with empty string by default
     --------------------------------
     */
-    let poster = ""; // ← THIS WAS MISSING - moved outside the if block
+    let poster = req.body.poster || "";
 
     if (req.file) {
       try {
